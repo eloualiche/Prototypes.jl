@@ -42,13 +42,14 @@ This was forked from TexTables.jl
 # Throws
 - `NotFoundError`: I guess we could throw an error if `val` isn't found.
 """
-function tabulate(df::AbstractDataFrame, cols::Symbol)
+function tabulate(df::AbstractDataFrame, 
+    cols::Union{Symbol, Array{Symbol}})
 
 # debug
     # cols = :island
     # df = dropmissing(DataFrame(PalmerPenguins.load()))
 
-    if length(cols) > 1
+    if typeof(cols) <: Array{Symbol}
         error("Only accepts one variable for now ...")
     end
 
