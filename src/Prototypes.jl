@@ -3,7 +3,7 @@ module Prototypes
 # ------------------------------------------------------------------------------------------
 import ColorSchemes: get, colorschemes
 import Crayons: @crayon_str
-import DataFrames: AbstractDataFrame, groupby, combine
+import DataFrames: AbstractDataFrame, DataFrame, groupby, combine
 import PrettyTables: Crayon, ft_printf, get, Highlighter, hl_col, pretty_table
 # ------------------------------------------------------------------------------------------
 
