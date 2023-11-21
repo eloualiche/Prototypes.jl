@@ -53,14 +53,20 @@ function tabulate(df::AbstractDataFrame, cols::Union{Symbol, Array{Symbol}};
     # cols = [:island, :species]
     # df = dropmissing(DataFrame(PalmerPenguins.load()))
 
-
     # Count the number of observations by `columns`
-    # tab = combine(groupby(df, cols), cols .=> length)
     df_out = combine(groupby(df, cols), nrow => :freq, proprow =>:pct)
     if reorder_cols
         sort!(df_out, cols)                          # order before we build cumulative
     end
     transform!(df_out, :pct => cumsum => :cum)   # Construct a Frequency Column
+
+    col_highlighters = vcat(
+        map(i -> (hl_col(i, crayon"cyan bold")), 1:N_COLS),
+        hl_custom_gradient(cols=(N_COLS+1), colorscheme=:Oranges_9, scale=maximum(df_out.freq)),
+        hl_custom_gradient(cols=(N_COLS+2), colorscheme=:Greens_9),
+        hl_custom_gradient(cols=(N_COLS+3), colorscheme=:Greens_9)    
+    )
+    col_highlighters = Tuple(x for x in col_highlighters)
 
     pretty_table(df_out;
         hlines = [1],
@@ -71,13 +77,7 @@ function tabulate(df::AbstractDataFrame, cols::Union{Symbol, Array{Symbol}};
             init=Dict{Tuple{Int64, Int64}, Symbol}()),
         header = [string.(cols); "Freq."; "Percent"; "Cum"],
         formatters = (ft_printf("%.2f", 3), ft_printf("%.2f", 4)),
-        highlighters = (
-            hl_col(1, crayon"cyan bold"),
-            hl_col(2, crayon"cyan bold"),
-            hl_custom_gradient(cols=(N_COLS+1), colorscheme=:Oranges_9, scale=maximum(df_out.freq)),
-            hl_custom_gradient(cols=(N_COLS+2), colorscheme=:Greens_9),
-            hl_custom_gradient(cols=(N_COLS+3), colorscheme=:Greens_9)            
-        ),
+        highlighters = col_highlighters,   
         border_crayon = crayon"bold yellow", 
         header_crayon = crayon"bold light_green",
         show_header = true,
