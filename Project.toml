@@ -18,4 +18,3 @@ PalmerPenguins = "8b842266-38fa-440a-9b57-31493939ab85"
 
 [targets]
 test = ["Test"]
-PalmerPenguins = "8b842266-38fa-440a-9b57-31493939ab85"
