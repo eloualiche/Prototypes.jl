@@ -14,14 +14,6 @@
 
 
 # ------------------------------------------------------------------------------------------
-function greet_FinanceRoutines()
-    return "Hello FinanceRoutines!"
-end
-# ------------------------------------------------------------------------------------------
-
-
-
-# ------------------------------------------------------------------------------------------
 """
     tabulate(array::MyArray{T}, val::T; verbose=true) where {T} -> Int
 
@@ -55,9 +47,9 @@ function tabulate(df::AbstractDataFrame, cols::Union{Symbol, Array{Symbol}};
     # cols = [:island, :species]
     # df = dropmissing(DataFrame(PalmerPenguins.load()))
 
-    if typeof(cols) <: Array{Symbol}
-        error("Only accepts one variable for now ...")
-    end
+    # if typeof(cols) <: Array{Symbol}
+        # error("Only accepts one variable for now ...")
+    # end
 
     # Count the number of observations by `columns`
     # tab = combine(groupby(df, cols), cols .=> length)
