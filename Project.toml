@@ -17,4 +17,4 @@ Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 PalmerPenguins = "8b842266-38fa-440a-9b57-31493939ab85"
 
 [targets]
-test = ["Test"]
+test = ["Test", "PalmerPenguins"]
