@@ -83,6 +83,8 @@ function tabulate(df::AbstractDataFrame, cols::Union{Symbol, Array{Symbol}};
         show_header = true,
         )
 
+    return(df_out)
+
 end
 # ------------------------------------------------------------------------------------------
 
