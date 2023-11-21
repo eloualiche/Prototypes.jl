@@ -40,16 +40,19 @@ allow user to specify order of columns (reorder = false flag)
 function tabulate(df::AbstractDataFrame, cols::Union{Symbol, Array{Symbol}};
     reorder_cols=true)
 
-    N_COLS = size(cols,1)
+    if typeof(cols) <: Symbol
+        N_COLS = 1
+    else
+        N_COLS = size(cols,1)
+        # error("Only accepts one variable for now ...")
+    end
+
 
 # debug
     # cols = :island
     # cols = [:island, :species]
     # df = dropmissing(DataFrame(PalmerPenguins.load()))
 
-    # if typeof(cols) <: Array{Symbol}
-        # error("Only accepts one variable for now ...")
-    # end
 
     # Count the number of observations by `columns`
     # tab = combine(groupby(df, cols), cols .=> length)
