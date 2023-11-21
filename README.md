@@ -1,6 +1,7 @@
 # Prototypes
 
-[![Build Status](https://github.com/eloualic/Prototypes.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/eloualic/Prototypes.jl/actions/workflows/CI.yml?query=branch%3Amain)
+[![CI](https://github.com/eloualiche/Prototypes.jl/actions/workflows/CI.yml/badge.svg)](https://github.com/eloualiche/Prototypes.jl/actions/workflows/CI.yml)
+
 
 `Prototypes.jl` is a placeholder package for some functions that I use in julia frequently.
 
