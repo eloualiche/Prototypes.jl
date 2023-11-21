@@ -22,9 +22,9 @@ Pkg.add(url="https://github.com/eloualiche/Prototypes.jl")
 
 First import the monthly stock file and the compustat funda file
 ```julia
-using PalmerPenguins
 using DataFrames
 using Prototypes
+using PalmerPenguins
 
 df = DataFrame(PalmerPenguins.load())
 
