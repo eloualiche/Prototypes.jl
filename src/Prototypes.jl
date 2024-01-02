@@ -4,7 +4,7 @@ module Prototypes
 import ColorSchemes: get, colorschemes
 import Crayons: @crayon_str
 import DataFrames: AbstractDataFrame, DataFrame, groupby, combine, nrow, proprow, transform!
-import Dates: Dates.format, Dates.now
+import Dates: format, now
 import Logging: global_logger, Logging, Logging.Debug, Logging.Info, Logging.Warn
 import LoggingExtras: ConsoleLogger, EarlyFilteredLogger, FileLogger, MinLevelLogger, TeeLogger, 
     TransformerLogger

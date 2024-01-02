@@ -47,7 +47,7 @@ function custom_logger(filename;
 
     # custom timestamps
     timestamp_logger(logger) = TransformerLogger(logger) do log
-        merge(log, (; message = "$(Dates.format(Dates.now(), log_date_format)) \n$(log.message)"))
+        merge(log, (; message = "$(format(now(), log_date_format)) \n$(log.message)"))
     end
 
     # custom filter: remove message that match some packages for example
