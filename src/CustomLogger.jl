@@ -19,7 +19,7 @@
 # Arguments
 - `filename::AbstractString`: base name for the log files 
 - `output_dir::AbstractString=./log/`: name of directory where log files are written
-- `filter::Vector{Symbol}=nothing`: which modules do you want to filter out of logging (only for debug)
+- `filtered_modules::Vector{Symbol}=nothing`: which modules do you want to filter out of logging (only for debug)
 - `log_date_format::AbstractString="yyyy-mm-dd HH:MM:SS"`: time stamp format at beginning of each logged lines
 - `overwrite::Bool=true`: do we overwrite previously created log files
 

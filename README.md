@@ -5,7 +5,8 @@
 
 `Prototypes.jl` is a placeholder package for some functions that I use in julia frequently.
 
-So far the package provides one function to tabulate data in a dataframe
+So far the package provides one function to tabulate data in a dataframe and some custom logging function.
+Note that as the package grow in different directions, dependencies might become overwhelming. Feel  c 
 
 ## Installation
 
