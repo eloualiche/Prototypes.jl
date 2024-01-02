@@ -24,8 +24,10 @@
 - `overwrite::Bool=true`: do we overwrite previously created log files
 
 The custom_logger function creates four files in `output_dir` for four different levels of logging:
-    from least to most verbose: `filename.info.log.jl, filename.warn.log.jl`, `filename.debug.log.jl`, `filename.full.log.jl`
+    from least to most verbose: `filename.info.log.jl`, `filename.warn.log.jl`, `filename.debug.log.jl`, `filename.full.log.jl`
 The debug logging offers the option to filter messages from specific packages (some packages are particularly verbose) using the `filter` optional argument
+The full logging gets all of the debug without any of the filters.
+Info and warn log the standard info and warning level logging messages. 
 
 Note that the default **overwrite** old log files. 
 
