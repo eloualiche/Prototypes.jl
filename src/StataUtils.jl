@@ -58,7 +58,7 @@ function tabulate(df::AbstractDataFrame, cols::Union{Symbol, Array{Symbol}};
     if reorder_cols
         sort!(df_out, cols)                          # order before we build cumulative
     end
-    transform!(df_out, :pct => cumsum => :cum)   # Construct a Frequency Column
+    transform!(df_out, :pct => cumsum => :cum, :freq => Int => :freq) 
 
     col_highlighters = vcat(
         map(i -> (hl_col(i, crayon"cyan bold")), 1:N_COLS),
