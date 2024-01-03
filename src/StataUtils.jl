@@ -76,7 +76,7 @@ function tabulate(df::AbstractDataFrame, cols::Union{Symbol, Array{Symbol}};
             map(i -> (i,1)=>:l, 1:N_COLS+3), 
             init=Dict{Tuple{Int64, Int64}, Symbol}()),
         header = [string.(cols); "Freq."; "Percent"; "Cum"],
-        formatters = (ft_printf("%.2f", 3), ft_printf("%.2f", 4)),
+        formatters = (ft_printf("%d", 1), ft_printf("%d", 3), ft_printf("%.3f", 4), ft_printf("%.2f", 5)),
         highlighters = col_highlighters,   
         border_crayon = crayon"bold yellow", 
         header_crayon = crayon"bold light_green",
