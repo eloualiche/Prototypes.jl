@@ -26,7 +26,8 @@ This was forked from TexTables.jl
 - `cols::Symbol`: (single) column to tabulate
 
 # Keywords
-- `verbose::Bool=true`: print out progress details
+- `reorder_cols::Bool=true`: sort by columns
+- `out::Symbol=:stdout`: output is a nothing; other options are :string for string; :df for a dataframe
 
 # Returns
 - `PrettyTableInt`: the index where `val` is located in the `array`
@@ -38,7 +39,7 @@ This was forked from TexTables.jl
 allow user to specify order of columns (reorder = false flag)
 """
 function tabulate(df::AbstractDataFrame, cols::Union{Symbol, Array{Symbol}};
-    reorder_cols=true)
+    reorder_cols=true, out::Symbol=:stdout)
 
     if typeof(cols) <: Symbol
         N_COLS = 1
@@ -68,22 +69,47 @@ function tabulate(df::AbstractDataFrame, cols::Union{Symbol, Array{Symbol}};
     )
     col_highlighters = Tuple(x for x in col_highlighters)
 
-    pretty_table(df_out;
-        hlines = [1],
-        vlines = [N_COLS],
-        alignment = vcat(repeat([:l], N_COLS), :c, :c, :c),
-        cell_alignment = reduce(push!, 
-            map(i -> (i,1)=>:l, 1:N_COLS+3), 
-            init=Dict{Tuple{Int64, Int64}, Symbol}()),
-        header = [string.(cols); "Freq."; "Percent"; "Cum"],
-        formatters = (ft_printf("%d", 1), ft_printf("%d", 3), ft_printf("%.3f", 4), ft_printf("%.2f", 5)),
-        highlighters = col_highlighters,   
-        border_crayon = crayon"bold yellow", 
-        header_crayon = crayon"bold light_green",
-        show_header = true,
+
+    if out ∈ [:stdout, :df]
+
+        pretty_table(df_out;
+            hlines = [1],
+            vlines = [N_COLS],
+            alignment = vcat(repeat([:l], N_COLS), :c, :c, :c),
+            cell_alignment = reduce(push!, 
+                map(i -> (i,1)=>:l, 1:N_COLS+3), 
+                init=Dict{Tuple{Int64, Int64}, Symbol}()),
+            header = [string.(cols); "Freq."; "Percent"; "Cum"],
+            formatters = (ft_printf("%d", 1), ft_printf("%d", 3), ft_printf("%.3f", 4), ft_printf("%.2f", 5)),
+            highlighters = col_highlighters,   
+            border_crayon = crayon"bold yellow", 
+            header_crayon = crayon"bold light_green",
+            show_header = true,
         )
 
-    return(df_out)
+        if out==:stdout
+            return(nothing)
+        elseif out==:df
+            return(df_out)
+        end
+        
+    elseif out==:string # this might be costly as I am regenerating the table. 
+        pt = pretty_table(String, df_out;
+            hlines = [1],
+            vlines = [N_COLS],
+            alignment = vcat(repeat([:l], N_COLS), :c, :c, :c),
+            cell_alignment = reduce(push!, 
+                map(i -> (i,1)=>:l, 1:N_COLS+3), 
+                init=Dict{Tuple{Int64, Int64}, Symbol}()),
+            header = [string.(cols); "Freq."; "Percent"; "Cum"],
+            formatters = (ft_printf("%d", 1), ft_printf("%d", 3), ft_printf("%.3f", 4), ft_printf("%.2f", 5)),
+            highlighters = col_highlighters,   
+            border_crayon = crayon"bold yellow", 
+            header_crayon = crayon"bold light_green",
+            show_header = true,
+        )
+        return(pt)
+    end
 
 end
 # ------------------------------------------------------------------------------------------
