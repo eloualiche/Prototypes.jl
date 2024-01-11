@@ -15,7 +15,8 @@
 
 # ------------------------------------------------------------------------------------------
 """
-    tabulate(array::MyArray{T}, val::T; verbose=true) where {T} -> Int
+    tabulate(df::AbstractDataFrame, cols::Union{Symbol, Array{Symbol}}; 
+        reorder_cols=true, out::Symbol=:stdout)
 
 tabulate the values for the specific columns of a dataframe
 builtin search :)
