@@ -53,31 +53,44 @@ function custom_logger(filename::Union{AbstractString, Vector{AbstractString}};
 
     overwrite && map(x->rm(x, force=true), l_logfiles) # clean up the files
 
-    # custom filter: remove message that match some packages for example
+    # warning if some non imported get filtered ... 
     imported_modules = filter((x) -> typeof(getfield(Main, x)) <: Module && x ≠ :Main, 
         names(Main,imported=true))
-
-    if !isnothing(filtered_modules)
-        catch_nonimported = map(x -> x ∈ imported_modules, filtered_modules) 
-        (!(reduce(&, catch_nonimported))) ? 
-        (@warn "Trying to filter non imported modules ... $(join(string.(filtered_modules[ .!catch_nonimported ]), ",")) ... check your preamble") : 
+    all_filters = filter(x->!isnothing(x), unique([filtered_modules; absolute_filtered_modules]))
+    catch_nonimported = map(x -> x ∈ imported_modules, all_filters)
+    (!(reduce(&, catch_nonimported))) ? 
+        (@warn "Some non (directly) imported modules are being filtered ... $(join(string.(all_filters[ .!catch_nonimported ]), ","))") : 
         nothing
-        specific_modules_tofilter = filtered_modules[ catch_nonimported ]
-    end
+
+    # custom filter: remove message that match some packages for example
+    # imported_modules = filter((x) -> typeof(getfield(Main, x)) <: Module && x ≠ :Main, 
+    #     names(Main,imported=true))
+    # if !isnothing(filtered_modules)
+    #     catch_nonimported = map(x -> x ∈ imported_modules, filtered_modules) 
+    #     (!(reduce(&, catch_nonimported))) ? 
+    #     (@warn "Trying to filter non imported modules ... $(join(string.(filtered_modules[ .!catch_nonimported ]), ",")) ... check your preamble") : 
+    #     nothing
+    #     specific_modules_tofilter = filtered_modules[ catch_nonimported ]
+    # end
+
     function module_specific_message_filter(log)
-        return( isnothing(filtered_modules) ? true : !(Symbol(string(log._module)) ∈ specific_modules_tofilter) )
+        # return( isnothing(filtered_modules) ? true : !(Symbol(string(log._module)) ∈ specific_modules_tofilter) )
+        return( isnothing(filtered_modules) ? true : !(Symbol(string(log._module)) ∈ filtered_modules) )
     end
 
-    if !isnothing(absolute_filtered_modules)
-        catch_nonimported = map(x -> x ∈ imported_modules, absolute_filtered_modules) 
-        (!(reduce(&, catch_nonimported))) ? 
-        (@warn "Trying to filter non imported modules ... $(join(string.(absolute_filtered_modules[ .!catch_nonimported ]), ",")) ... check your preamble") : 
-        nothing
-        absolute_modules_tofilter = absolute_filtered_modules[ catch_nonimported ]
-    end
+    # if !isnothing(absolute_filtered_modules)
+    #     catch_nonimported = map(x -> x ∈ imported_modules, absolute_filtered_modules) 
+    #     (!(reduce(&, catch_nonimported))) ? 
+    #     (@warn "Trying to filter non imported modules ... $(join(string.(absolute_filtered_modules[ .!catch_nonimported ]), ",")) ... check your preamble") : 
+    #     nothing
+    #     absolute_modules_tofilter = absolute_filtered_modules[ catch_nonimported ]
+    # end
     function module_absolute_message_filter(log)
-        return( isnothing(absolute_filtered_modules) ? true : !(Symbol(string(log._module)) ∈ absolute_modules_tofilter) )
+        # return( isnothing(absolute_filtered_modules) ? true : !(Symbol(string(log._module)) ∈ absolute_modules_tofilter) )
+        return( isnothing(absolute_filtered_modules) ? true : !(Symbol(string(log._module)) ∈ absolute_filtered_modules) )
     end
+
+
 
     format_log = (io,log_record)->custom_format(io, log_record; 
         displaysize=displaysize, log_date_format=log_date_format, log_time_format=log_time_format)
