@@ -148,7 +148,7 @@ function custom_format(io, log_record;
     date = format(now(), log_date_format)    
     time = format(now(), log_time_format)
 
-    timestamp = "$BOLD$time $EMPH$date$RESET"  # Apply bold only to the time
+    timestamp = "$BOLD$time$RESET $EMPH$date$RESET"  # Apply bold only to the time
 
     level = log_record.level
     color = get_color(level)
