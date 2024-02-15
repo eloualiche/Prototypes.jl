@@ -40,13 +40,16 @@ tabulate(df, [:island, :species])
 
 Here is an example where you can create a custom logger and redirect logging to different files
 ```julia
-custom_logger("file_to_log", output_dir="./log", # where are the files generated
-    filter=[:StatsModels], # debug file will not have messages from StatsModels
-    log_date_format="yyyy-mm-dd HH:MM:SS", # time stamp for messages
-    overwrite=true) # overwrite old log files (with the same name)
+custom_logger("file_to_log",                                  # where are the files generated
+    filtered_modules=[:TranscodingStreams, :StatsModels],     # filtering msg only for debug
+    absolute_filtered_modules=[:TranscodingStreams],          # filtering msg for all
+    log_date_format="yyyy-mm-dd", log_time_format="HH:MM:SS", # date and time formatting
+    displaysize=(50,100),                                     # how much to show
+    overwrite=false                                           # overwrite old logs
+    )
 
 # if you have run the previous example
-@info tabulate(df, :island)
-@warn tabulate(df, :island)
+@info tabulate(df, :island, out=:string)
+@warn tabulate(df, :island, out=:df)
 @debug tabulate(df, :island)
 ```

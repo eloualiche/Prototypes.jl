@@ -151,7 +151,6 @@ function custom_format(io, log_record;
     timestamp = "$BOLD$time $EMPH$date$RESET"  # Apply bold only to the time
 
     level = log_record.level
-    message = log_record.message
     color = get_color(level)
 
     # Format source
@@ -165,16 +164,20 @@ function custom_format(io, log_record;
     prefix_continuation_line = "│ "
     prefix_last_line = "└ "
     
-    println(io, "$first_line")
-
-
-    buf = IOBuffer()
-    show(IOContext(buf, :limit=>true, :compact=>true, :color=>true, :displaysize=>displaysize), 
-        "text/plain", message)
-    formatted_message = String(take!(buf))
+    # we view strings as simple and everything else as complex
+    if log_record.message isa AbstractString
+        formatted_message = log_record.message
+    else
+        buf = IOBuffer()
+        show(IOContext(buf, :limit=>true, :compact=>true, :color=>true, :displaysize=>displaysize), 
+            "text/plain", log_record.message)
+        formatted_message = String(take!(buf))
+    end
 
     message_lines = split(formatted_message, "\n")
     num_lines = length(message_lines)
+    # printing
+    println(io, "$first_line")
     for (index, line) in enumerate(message_lines)
         if index < num_lines
             println(io, "$prefix_continuation_line$line")
