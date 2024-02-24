@@ -75,7 +75,7 @@ function custom_logger(filename::Union{AbstractString, Vector{AbstractString}};
 
     function module_specific_message_filter(log)
         # return( isnothing(filtered_modules) ? true : !(Symbol(string(log._module)) ∈ specific_modules_tofilter) )
-        return( isnothing(filtered_modules) ? true : !(Symbol(string(log._module)) ∈ filtered_modules) )
+        return( isnothing(filtered_modules) ? true : !(Symbol(string(log._module)) ∈ unique([filtered_modules; absolute_filtered_modules]) ) )
     end
 
     # if !isnothing(absolute_filtered_modules)
