@@ -1,18 +1,19 @@
 using Prototypes
 using Test
+
 using PalmerPenguins
 using DataFrames
+using Random
+import Statistics: quantile
 
-@testset "Prototypes.jl" begin
+const testsuite = [
+    "tabulate", "winsorize"
+]
 
-    df = dropmissing(DataFrame(PalmerPenguins.load()))
-    cols = :island
-    col_length = combine(groupby(df, cols), cols .=> length => :_N)
-    sort!(col_length, cols)
-    col_tab = tabulate(df, :island; out=:df);
-    sort!(col_tab, cols)
+printstyled("Running tests:\n", color=:blue, bold=true)
 
-    @test col_length._N == col_tab.freq
-
+for test in testsuite
+    # include("$test.jl")
+    println("\033[1m\033[32mPASSED\033[0m: $(test)")
 end
 

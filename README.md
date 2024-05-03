@@ -36,6 +36,19 @@ tabulate(df, :island)
 tabulate(df, [:island, :species])
 ```
 
+### Winsorize data
+
+```julia
+using DataFrames
+using Prototypes
+using PalmerPenguins
+
+df = DataFrame(PalmerPenguins.load())
+winsorize(df.flipper_length_mm, probs=(0.05, 0.95)) # skipmissing by default
+transform(df, :flipper_length_mm => 
+    (x->winsorize(x, probs=(0.05, 0.95), replace_value=missing)), renamecols=false)
+```
+
 ### Custom Logging
 
 Here is an example where you can create a custom logger and redirect logging to different files

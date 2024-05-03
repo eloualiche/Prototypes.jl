@@ -9,6 +9,8 @@ import Logging: global_logger, Logging, Logging.Debug, Logging.Info, Logging.War
 import LoggingExtras: ConsoleLogger, EarlyFilteredLogger, FileLogger, FormatLogger, 
     MinLevelLogger, TeeLogger, TransformerLogger
 import PrettyTables: Crayon, ft_printf, get, Highlighter, hl_col, pretty_table
+import Random: seed!
+import Statistics: quantile
 # --------------------------------------------------------------------------------------------------
 
 
@@ -16,6 +18,7 @@ import PrettyTables: Crayon, ft_printf, get, Highlighter, hl_col, pretty_table
 # Import functions
 include("StataUtils.jl")
 include("CustomLogger.jl")
+include("Winsorize.jl")
 # --------------------------------------------------------------------------------------------------
 
 
@@ -23,6 +26,7 @@ include("CustomLogger.jl")
 # List of exported functions
 export custom_logger
 export tabulate 
+export winsorize
 # --------------------------------------------------------------------------------------------------
 
 
