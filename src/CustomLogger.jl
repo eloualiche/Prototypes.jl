@@ -90,8 +90,6 @@ function custom_logger(filename::Union{AbstractString, Vector{AbstractString}};
         return( isnothing(absolute_filtered_modules) ? true : !(Symbol(string(log._module)) ∈ absolute_filtered_modules) )
     end
 
-
-
     format_log = (io,log_record)->custom_format(io, log_record; 
         displaysize=displaysize, log_date_format=log_date_format, log_time_format=log_time_format)
 

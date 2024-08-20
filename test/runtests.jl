@@ -3,11 +3,12 @@ using Test
 
 using PalmerPenguins
 using DataFrames
+using Dates
 using Random
 import Statistics: quantile
 
 const testsuite = [
-    "tabulate", "winsorize"
+    "tabulate", "winsorize", "panel_fill"
 ]
 
 printstyled("Running tests:\n", color=:blue, bold=true)
