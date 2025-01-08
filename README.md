@@ -2,18 +2,18 @@
 
 [![CI](https://github.com/eloualiche/Prototypes.jl/actions/workflows/CI.yml/badge.svg)](https://github.com/eloualiche/Prototypes.jl/actions/workflows/CI.yml)
 [![Lifecycle:Experimental](https://img.shields.io/badge/Lifecycle-Experimental-339999)](https://github.com/eloualiche/Prototypes.jl/actions/workflows/CI.yml)
-
+[![codecov](https://codecov.io/gh/eloualiche/Prototypes.jl/graph/badge.svg?token=53QO3HSSRT)](https://codecov.io/gh/eloualiche/Prototypes.jl)
 
 `Prototypes.jl` is a placeholder package for some functions that I use in julia frequently.
 
-So far the package provides a couple of functions 
-  
+So far the package provides a couple of functions
+
   1. tabulate some data (`tabulate`)
   2. winsorize some data (`winsorize`)
   3. fill unbalanced panel data (`panel_fill`)
   4. some custom logging function (`custom_logger`)
 
-Note that as the package grow in different directions, dependencies might become overwhelming. 
+Note that as the package grow in different directions, dependencies might become overwhelming.
 The readme serves as documentation; there might be more examples inside of the test folder.
 
 ## Installation
@@ -52,7 +52,7 @@ using PalmerPenguins
 
 df = DataFrame(PalmerPenguins.load())
 winsorize(df.flipper_length_mm, probs=(0.05, 0.95)) # skipmissing by default
-transform(df, :flipper_length_mm => 
+transform(df, :flipper_length_mm =>
     (x->winsorize(x, probs=(0.05, 0.95), replace_value=missing)), renamecols=false)
 ```
 
@@ -60,19 +60,19 @@ transform(df, :flipper_length_mm =>
 
 ```julia
 df3 = DataFrame(        # missing t=2 for id=1
-    id = ["a","a", "b","b", "c","c","c", "d","d","d","d"], 
+    id = ["a","a", "b","b", "c","c","c", "d","d","d","d"],
     t  = [Date(1990, 1, 1), Date(1990, 4, 1), Date(1990, 8, 1), Date(1990, 9, 1),
           Date(1990, 1, 1), Date(1990, 2, 1), Date(1990, 4, 1),
           Date(1999, 11, 10), Date(1999, 12, 21), Date(2000, 2, 5), Date(2000, 4, 1)],
     v1 = [1,1, 1,6, 6,0,0, 1,4,11,13],
     v2 = [1,2,3,6,6,4,5, 1,2,3,4],
-    v3 = [1,5,4,6,6,15,12.25, 21,22.5,17.2,1]) 
+    v3 = [1,5,4,6,6,15,12.25, 21,22.5,17.2,1])
 
-panel_fill(df3, :id, :t, [:v1, :v2, :v3], 
+panel_fill(df3, :id, :t, [:v1, :v2, :v3],
     gap=Month(1), method=:backwards, uniquecheck=true, flag=true, merge=true)
-panel_fill(df3, :id, :t, [:v1, :v2, :v3], 
+panel_fill(df3, :id, :t, [:v1, :v2, :v3],
     gap=Month(1), method=:forwards, uniquecheck=true, flag=true, merge=true)
-panel_fill(df3, :id, :t, [:v1, :v2, :v3], 
+panel_fill(df3, :id, :t, [:v1, :v2, :v3],
     gap=Month(1), method=:linear, uniquecheck=true, flag=true, merge=true)
 
 ```
