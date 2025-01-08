@@ -1,3 +1,4 @@
+# --------------------------------------------------------------------------------------------------
 using Prototypes
 using Test
 
@@ -11,10 +12,18 @@ const testsuite = [
     "tabulate", "winsorize", "panel_fill"
 ]
 
+ENV["DATADEPS_ALWAYS_ACCEPT"] = true # for data loading of PalmerPenguins
+# --------------------------------------------------------------------------------------------------
+
+
+# --------------------------------------------------------------------------------------------------
 printstyled("Running tests:\n", color=:blue, bold=true)
 
-for test in testsuite
-    # include("$test.jl")
-    println("\033[1m\033[32mPASSED\033[0m: $(test)")
+@testset verbose=true "Prototypes.jl" begin
+    for test in testsuite
+        println("\033[1m\033[32m  → RUNNING\033[0m: $(test)")
+        include("$test.jl")
+        println("\033[1m\033[32m  PASSED\033[0m")
+    end
 end
-
+# --------------------------------------------------------------------------------------------------
