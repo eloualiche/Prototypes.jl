@@ -27,6 +27,8 @@ This was forked from TexTables.jl
 - `cols::Symbol`: (single) column to tabulate
 
 # Keywords
+- `group_type::Union{Symbol, Vector{Symbol}}`: grouping is done based on type in column or values (default)
+   must be of the size of cols if it is a vector
 - `reorder_cols::Bool=true`: sort by columns
 - `out::Symbol=:stdout`: output is a nothing; other options are :string for string; :df for a dataframe
 
@@ -39,26 +41,59 @@ This was forked from TexTables.jl
 # TO DO
 allow user to specify order of columns (reorder = false flag)
 """
-function tabulate(df::AbstractDataFrame, cols::Union{Symbol, Array{Symbol}};
-    reorder_cols=true, out::Symbol=:stdout)
+function tabulate(
+    df::AbstractDataFrame, cols::Union{Symbol, Vector{Symbol}};
+    group_type::Union{Symbol, Vector{Symbol}}=:value, 
+    reorder_cols::Bool=true, 
+    out::Symbol=:stdout)
 
-    if typeof(cols) <: Symbol
+    if typeof(cols) <: Symbol # check if it's an array or just a point
         N_COLS = 1
     else
         N_COLS = size(cols,1)
         # error("Only accepts one variable for now ...")
     end
 
+    # Count the number of observations by `columns`: this is the main calculation
+    group_type_error_msg = """
+        \ngroup_type input must specify either ':value' or ':type' for columns; 
+        options are :value, :type, or a vector combining the two;
+        see help for more information
+        """
+    if group_type == :value
+        df_out = combine(groupby(df, cols), nrow => :freq, proprow =>:pct)
+        new_cols = cols
+    elseif group_type == :type
+        name_type_cols = Symbol.(cols, "_typeof")
+        df_out = transform(df, cols .=> ByRow(typeof) .=> name_type_cols) |>
+            (d -> combine(groupby(d, name_type_cols), nrow => :freq, proprow =>:pct))
+        new_cols = name_type_cols
+        # rename!(df_out, name_type_cols .=> cols)
+    elseif typeof(group_type) <: Vector{Symbol}
+        !all(s -> s in [:value, :type], group_type) && (@error group_type_error_msg)
+        (size(group_type, 1) != size(cols, 1)) && 
+            (@error "\ngroup_type and cols must be the same size; \nsee help for more information")
+        type_cols = cols[group_type .== :type]
+        name_type_cols = Symbol.(type_cols, "_typeof")
+        group_cols = [cols[group_type .== :value]; name_type_cols]
+        df_out = transform(df, type_cols .=> ByRow(typeof) .=> name_type_cols) |>
+            (d -> combine(groupby(d, group_cols), nrow => :freq, proprow =>:pct))
+        new_cols = group_cols
+    else
+        @error group_type_error_msg
+    end
 
-# debug
-    # cols = :island
-    # cols = [:island, :species]
-    # df = dropmissing(DataFrame(PalmerPenguins.load()))
 
-    # Count the number of observations by `columns`
-    df_out = combine(groupby(df, cols), nrow => :freq, proprow =>:pct)
-    if reorder_cols
-        sort!(df_out, cols)                          # order before we build cumulative
+    if reorder_cols 
+        cols_sortable = [ # check whether it makes sense to sort on the variables
+            name
+            for (name, col) in pairs(eachcol(select(df_out, new_cols)))
+            if eltype(col) |> t -> hasmethod(isless, Tuple{t,t})
+        ]
+        if size(cols_sortable, 1)>0
+            cols_sortable
+            sort!(df_out, cols_sortable)  # order before we build cumulative
+        end
     end
     transform!(df_out, :pct => cumsum => :cum, :freq => (x-> Int.(x)) => :freq) 
 

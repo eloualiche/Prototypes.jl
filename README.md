@@ -41,6 +41,11 @@ df = DataFrame(PalmerPenguins.load())
 
 tabulate(df, :island)
 tabulate(df, [:island, :species])
+
+# If you are looking for groups by type (detect missing e.g.)
+df = DataFrame(x = [1, 2, 2, "NA", missing], y = ["c", "c", "b", "z", "d"])
+tabulate(df, [:x, :y], group_type = :type) # only types for all group variables
+tabulate(df, [:x, :y], group_type = [:value, :type]) # mix value and types
 ```
 
 ### Winsorize data
