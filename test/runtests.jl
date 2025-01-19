@@ -5,12 +5,17 @@ using Test
 using PalmerPenguins
 using DataFrames
 using Dates
+import HTTP
+import Logging: global_logger
+import LoggingExtras: ConsoleLogger, TeeLogger
 using Random
 import Statistics: quantile
+using StreamToString
 
 const testsuite = [
-    "tabulate", "winsorize", "panel_fill"
+    "tabulate", "winsorize", "panel_fill", "customlogger"
 ]
+
 
 ENV["DATADEPS_ALWAYS_ACCEPT"] = true # for data loading of PalmerPenguins
 # --------------------------------------------------------------------------------------------------

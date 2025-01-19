@@ -17,12 +17,16 @@ Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 
 [compat]
+HTTP = "1.10.15"
 PalmerPenguins = "0.1.4"
+StreamToString = "0.1.0"
 julia = "1"
 
 [extras]
+HTTP = "cd3eb016-35fb-5094-929b-558a96fad6f3"
 PalmerPenguins = "8b842266-38fa-440a-9b57-31493939ab85"
+StreamToString = "dc918f9c-79cc-42e6-85f1-d8b9b09632f4"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["Test", "PalmerPenguins"]
+test = ["Test", "PalmerPenguins", "StreamToString", "HTTP"]
