@@ -86,13 +86,19 @@ panel_fill(df3, :id, :t, [:v1, :v2, :v3],
 
 Here is an example where you can create a custom logger and redirect logging to different files
 ```julia
-custom_logger("file_to_log",                                  # where are the files generated
-    filtered_modules=[:TranscodingStreams, :StatsModels],     # filtering msg only for debug
-    absolute_filtered_modules=[:TranscodingStreams],          # filtering msg for all
-    log_date_format="yyyy-mm-dd", log_time_format="HH:MM:SS", # date and time formatting
-    displaysize=(50,100),                                     # how much to show
-    overwrite=false                                           # overwrite old logs
-    )
+custom_logger(
+        "./log/logfile-prefix";                          # where are the files generated (will generate 4 files for different log levels)
+
+        filtered_modules_all=[:HTTP],                    # filtering messages across all loggers from specific modules
+        filtered_modules_specific=[:TranscodingStreams], # filtering messages for stdout and info from specific modules
+
+        create_log_files=true,                                    # if false all logs are written to a single file
+        overwrite=true,                                           # erase old log files
+        log_date_format="yyyy-mm-dd", log_time_format="HH:MM:SS", # date and time formatting
+        displaysize=(50,100),                                     # how much to show
+        overwrite=false                                           # overwrite old logs
+
+        );
 
 # if you have run the previous example
 @info tabulate(df, :island, out=:string)
