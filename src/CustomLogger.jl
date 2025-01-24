@@ -2,7 +2,7 @@
 
 # CustomLogger.jl
 
-# Function to create a custom logger 
+# Function to create a custom logger
 # --------------------------------------------------------------------------------------------------
 
 
@@ -15,13 +15,13 @@
 # --------------------------------------------------------------------------------------------------
 
 # CREATE an type LogSink that handles input that is one or many
-# TODO extend this to handle other things than just files ... 
+# TODO extend this to handle other things than just files ...
 abstract type LogSink end
 
 # Helper function to get filenames
 function get_log_filenames(filename::AbstractString; create_files::Bool=false)
     if create_files
-        files = ["$(filename)_error.log", "$(filename)_warn.log", 
+        files = ["$(filename)_error.log", "$(filename)_warn.log",
                  "$(filename)_info.log", "$(filename)_debug.log"]
     else
         files = repeat([filename], 4)
@@ -38,18 +38,18 @@ end
 struct FileSink <: LogSink
     files::Vector{String}
     ios::Vector{IO}
-    
+
     function FileSink(filename::AbstractString; create_files::Bool=false)
         files = get_log_filenames(filename; create_files=create_files)
-        if create_files 
-            @warn "Creating four different files for logging ... \n\t$files"
+        if create_files
+            @info "Creating four different files for logging ... \n\t$files"
         else
-           @warn "Only one sink provided ... \n\tAll logs will be written without differentiation on $filename"
+           @info "Only one sink provided ... \n\tAll logs will be written without differentiation on $filename"
         end
         ios = [open(f, "a") for f in files]
         new(files, ios)
     end
-    
+
     function FileSink(files::Vector{<:AbstractString})
         actual_files = get_log_filenames(files)
         ios = [open(f, "a") for f in actual_files]
@@ -67,9 +67,9 @@ end
 # --------------------------------------------------------------------------------------------------
 """
     custom_logger(filename; kw...)
-    
+
 # Arguments
-- `filename::AbstractString`: base name for the log files 
+- `filename::AbstractString`: base name for the log files
 - `output_dir::AbstractString=./log/`: name of directory where log files are written
 - `filtered_modules_specific::Vector{Symbol}=nothing`: which modules do you want to filter out of logging (only for info and stdout)
   Some packages just write too much log ... filter them out but still be able to check them out in other logs
@@ -84,13 +84,11 @@ The custom_logger function creates four files in `output_dir` for four different
     from least to most verbose: `filename.info.log.jl`, `filename.warn.log.jl`, `filename.debug.log.jl`, `filename.full.log.jl`
 The debug logging offers the option to filter messages from specific packages (some packages are particularly verbose) using the `filter` optional argument
 The full logging gets all of the debug without any of the filters.
-Info and warn log the standard info and warning level logging messages. 
+Info and warn log the standard info and warning level logging messages.
 
-Note that the default **overwrites** old log files. 
+Note that the default **overwrites** old log files (specify overwrite=false to avoid this).
 
-"""    
-# --------------------------------------------------------------------------------------------------
-# Modified custom_logger function
+"""
 function custom_logger(
     sink::LogSink;
     filtered_modules_specific::Union{Nothing, Vector{Symbol}}=nothing,
@@ -100,12 +98,12 @@ function custom_logger(
     displaysize::Tuple{Int,Int}=(50,100),
     verbose::Bool=false)
 
-    # warning if some non imported get filtered ... 
+    # warning if some non imported get filtered ...
     imported_modules = filter((x) -> typeof(getfield(Main, x)) <: Module && x ≠ :Main,
         names(Main, imported=true))
     all_filters = filter(x->!isnothing(x), unique([filtered_modules_specific; filtered_modules_all]))
     catch_nonimported = map(x -> x ∈ imported_modules, all_filters)
-    if !(reduce(&, catch_nonimported))
+    if !(reduce(&, catch_nonimported)) && verbose
         @warn "Some non (directly) imported modules are being filtered ... $(join(string.(all_filters[.!catch_nonimported]), ", "))"
     end
 
@@ -119,7 +117,7 @@ function custom_logger(
                 # Check if the module name starts with any of the filtered module names
                 # some modules did not get filtered because of submodules...
                 # Note: we might catch too many modules here so keep it in mind if something does not show up in log
-                for m in modules   
+                for m in modules
                     if startswith(module_name, string(m))
                         return false  # Filter out if matches
                     end
@@ -139,7 +137,7 @@ function custom_logger(
                 # Check if the module name starts with any of the filtered module names
                 # some modules did not get filtered because of submodules...
                 # Note: we might catch too many modules here so keep it in mind if something does not show up in log
-                for m in modules   
+                for m in modules
                     if startswith(module_name, string(m))
                         return false  # Filter out if matches
                     end
@@ -152,8 +150,8 @@ function custom_logger(
 
 
     format_log = (io,log_record)->custom_format(io, log_record;
-        displaysize=displaysize, 
-        log_date_format=log_date_format, 
+        displaysize=displaysize,
+        log_date_format=log_date_format,
         log_time_format=log_time_format)
 
     # Create demux_logger using sink's IO streams
@@ -178,7 +176,7 @@ function custom_logger(
             EarlyFilteredLogger(module_specific_message_filter, # stdout
                 FormatLogger(format_log, stdout)),
             Logging.Info)
-    ) 
+    )
 
     global_logger(demux_logger)
 
@@ -194,9 +192,20 @@ function custom_logger(
     filename::Union{AbstractString, Vector{AbstractString}};
     create_log_files::Bool=false,
     overwrite::Bool=false,
+    create_dir::Bool=false,
     kwargs...)
-    
-    files = get_log_filenames(filename; create_files=create_log_files)    
+
+    files = get_log_filenames(filename; create_files=create_log_files)
+
+    # create directory if needed and bool true
+    # returns an error if directory does not exist and bool false
+    log_dir = unique(dirname.(files))
+    if create_dir && !isdir(log_dir)
+        @warn "Creating directory for logs ... $(join(log_dir, ", "))"
+        mkpath.(log_dir)
+    elseif !isdir(log_dir)
+        @error "Directory for logs does not exist ... $(join(log_dir, ", "))"
+    end
     # Handle cleanup if needed
     overwrite && foreach(f -> rm(f, force=true), files)
     # Create sink
@@ -211,7 +220,7 @@ function custom_logger(;
     kwargs...)
 
     if abspath(PROGRAM_FILE) == @__FILE__  # true if not in REPL
-        custom_logger(@__FILE__; 
+        custom_logger(@__FILE__;
             kwargs...)
     else
         @error "Could not get proper filename for logger ... filename = $(@__FILE__)"
@@ -223,8 +232,8 @@ end
 
 # --------------------------------------------------------------------------------------------------
 # Custom format function with box-drawing characters for wrap-around effect
-function custom_format(io, log_record; 
-    displaysize::Tuple{Int,Int}=(50,100), 
+function custom_format(io, log_record;
+    displaysize::Tuple{Int,Int}=(50,100),
     log_date_format::AbstractString="yyyy-mm-dd", log_time_format::AbstractString="HH:MM:SS",
  )
 
@@ -232,8 +241,8 @@ function custom_format(io, log_record;
     BOLD = "\033[1m"
     EMPH = "\033[2m"
     RESET = "\033[0m"
-    
-    date = format(now(), log_date_format)    
+
+    date = format(now(), log_date_format)
     time = format(now(), log_time_format)
 
     timestamp = "$BOLD$time$RESET $EMPH$date$RESET"  # Apply bold only to the time
@@ -246,18 +255,18 @@ function custom_format(io, log_record;
     file = log_record.file
     line = log_record.line
     source_info = " @ $module_name[$file:$line]"
-    
+
     # Prepare the first part of the message prefix
     first_line = "┌ [$timestamp] $color$level\033[0m | $source_info"
     prefix_continuation_line = "│ "
     prefix_last_line = "└ "
-    
+
     # we view strings as simple and everything else as complex
     if log_record.message isa AbstractString
         formatted_message = log_record.message
     else
         buf = IOBuffer()
-        show(IOContext(buf, :limit=>true, :compact=>true, :color=>true, :displaysize=>displaysize), 
+        show(IOContext(buf, :limit=>true, :compact=>true, :color=>true, :displaysize=>displaysize),
             "text/plain", log_record.message)
         formatted_message = String(take!(buf))
     end
@@ -293,7 +302,3 @@ function get_color(level)
            RESET  # Default to no specific color
 end
 # --------------------------------------------------------------------------------------------------
-
-
-
-
