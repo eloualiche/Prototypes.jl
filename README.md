@@ -26,12 +26,14 @@ import Pkg
 Pkg.add(url="https://github.com/eloualiche/Prototypes.jl")
 ```
 
-## Examples
 
+## Usage
 
 ### Tabulate data
 
-First import the monthly stock file and the compustat funda file
+The `tabulate` function tries to emulate the tabulate function from stata (see oneway [here](https://www.stata.com/manuals/rtabulateoneway.pdf) or twoway [here](https://www.stata.com/manuals13/rtabulatetwoway.pdf)).
+This relies on the `DataFrames.jl` package and is useful to get a quick overview of the data.
+
 ```julia
 using DataFrames
 using Prototypes
@@ -48,8 +50,15 @@ tabulate(df, [:x, :y], group_type = :type) # only types for all group variables
 tabulate(df, [:x, :y], group_type = [:value, :type]) # mix value and types
 ```
 
+I have not implemented all the features of the stata tabulate function, but I am open to [suggestions](#3).
+
+
 ### Winsorize data
 
+There was no standard function to winsorize data in julia, so I implemented one.
+This is fairly standard and I offer options to specify probabilities or cutpoints; moreover you can replace the values that are winsorized with a missing, the cutpoints, or some specific values.
+
+The test suit has a large set of all the different examples, but you can start using it like this:
 ```julia
 using DataFrames
 using Prototypes
@@ -61,8 +70,14 @@ transform(df, :flipper_length_mm =>
     (x->winsorize(x, probs=(0.05, 0.95), replace_value=missing)), renamecols=false)
 ```
 
+
 ### Panel Fill
 
+Sometimes it is unpractical to work with unbalanced panel data.
+There are many ways to fill values between dates (what interpolation to use) and I try to implement a few of them.
+I use the function sparingly, so it has not been tested extensively.
+
+See the following example (or the test suite) for more information.
 ```julia
 df3 = DataFrame(        # missing t=2 for id=1
     id = ["a","a", "b","b", "c","c","c", "d","d","d","d"],
@@ -79,10 +94,13 @@ panel_fill(df3, :id, :t, [:v1, :v2, :v3],
     gap=Month(1), method=:forwards, uniquecheck=true, flag=true, merge=true)
 panel_fill(df3, :id, :t, [:v1, :v2, :v3],
     gap=Month(1), method=:linear, uniquecheck=true, flag=true, merge=true)
-
 ```
 
 ### Custom Logging
+
+This one is a little niche.
+I wanted to have a custom logger that would allow me to filter messages from specific modules and redirect them to different files, which I find useful to monitor long jobs in a format that is easy to read and that I can control.
+The formatter is hard-coded to what I like but I guess I could change it easily and make it an option.
 
 Here is an example where you can create a custom logger and redirect logging to different files
 ```julia
@@ -103,3 +121,10 @@ custom_logger(
 @warn tabulate(df, :island, out=:df)
 @debug tabulate(df, :island)
 ```
+
+
+### Future work ...
+
+I am writing some documentation that will a little more complete than this readme.
+
+See my other package [FinanceRoutines.jl](https://github.com/eloualiche/FinanceRoutines.jl) which is more focused and centered on working with financial data.
