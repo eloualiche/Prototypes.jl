@@ -34,10 +34,10 @@
                    "species_typeof")
 
     # test the twoway ad wide tabulate
-    df_twoway = tabulate(df, [:island, :species], format=:wide, out=:df);
+    df_twoway = tabulate(df, [:island, :species], format_tbl=:wide, out=:df);
     @test names(df_twoway) == ["island", "Adelie", "Gentoo", "Chinstrap"]
     @test nrow(df_twoway) == 3
-    df_twoway = tabulate(df, [:sex, :island, :species], format=:wide, out=:df);
+    df_twoway = tabulate(df, [:sex, :island, :species], format_tbl=:wide, out=:df);
     @test names(df_twoway) == ["sex", "island", "Adelie", "Gentoo", "Chinstrap"]
     @test nrow(df_twoway) == 6
 
@@ -58,6 +58,4 @@
 
 
 end
-
-
 

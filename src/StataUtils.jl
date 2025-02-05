@@ -28,7 +28,7 @@ This was forked from TexTables.jl and was inspired by https://github.com/matthie
     - `:type`: Group by the type of values in the column
     - `Vector{Symbol}`: Vector combining `:value` and `:type` for different columns
 - `reorder_cols::Bool=true`  Whether to sort the output by sortable columns
-- `format::Symbol=:long` How to present the results long or wide (stata twoway)
+- `format_tbl::Symbol=:long` How to present the results long or wide (stata twoway)
 - `format_stat::Symbol=:freq`  Which statistics to present for format :freq or :pct
 - `out::Symbol=:stdout`  Output format:
     - `:stdout`  Print formatted table to standard output (returns nothing)
@@ -72,7 +72,7 @@ function tabulate(
     df::AbstractDataFrame, cols::Union{Symbol, Vector{Symbol}};
     group_type::Union{Symbol, Vector{Symbol}}=:value,
     reorder_cols::Bool=true,
-    format::Symbol=:long, 
+    format_tbl::Symbol=:long, 
     format_stat::Symbol=:freq,
     out::Symbol=:stdout)
 
@@ -83,12 +83,12 @@ function tabulate(
         # error("Only accepts one variable for now ...")
     end
 
-    if !(format ∈ [:long, :wide])
+    if !(format_tbl ∈ [:long, :wide])
         if size(cols, 1) == 1
-            @warn "Converting format to :long"
-            format = :long
+            @warn "Converting format_tbl to :long"
+            format_tbl = :long
         else
-            @error "Table format must be :long or :wide"
+            @error "Table format_tbl must be :long or :wide"
         end
     end
 
@@ -120,6 +120,10 @@ function tabulate(
     else
         @error group_type_error_msg
     end
+    # resort columns based on the original order
+    new_cols = sort(new_cols isa Symbol ? [new_cols] : new_cols, 
+        by= x -> findfirst(==(replace(string(x), r"_typeof$" => "")), string.(cols)) )
+
 
     if reorder_cols
         cols_sortable = [ # check whether it makes sense to sort on the variables
@@ -135,7 +139,7 @@ function tabulate(
     transform!(df_out, :pct => cumsum => :cum, :freq => (x-> Int.(x)) => :freq)
 
 
-    if format == :long
+    if format_tbl == :long
         col_highlighters = vcat(
             map(i -> (hl_col(i, crayon"cyan bold")), 1:N_COLS),
             hl_custom_gradient(cols=(N_COLS+1), colorscheme=:Oranges_9, scale=maximum(df_out.freq)),
@@ -185,7 +189,7 @@ function tabulate(
             return(pt)
         end
 
-    elseif format == :wide 
+    elseif format_tbl == :wide 
 
         df_out = unstack(df_out, new_cols[1:(N_COLS-1)], new_cols[N_COLS], format_stat)
 
