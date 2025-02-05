@@ -6,12 +6,12 @@
 
 `Prototypes.jl` is a placeholder package for some functions that I use in julia frequently.
 
-So far the package provides a couple of functions
+So far the package provides a four functions
 
-  1. tabulate some data (`tabulate`)
-  2. winsorize some data (`winsorize`)
-  3. fill unbalanced panel data (`panel_fill`)
-  4. some custom logging function (`custom_logger`)
+  1. tabulate some data ([`tabulate`](#tabulate-data))
+  2. winsorize some data ([`winsorize`](#winsorize-data))
+  3. fill unbalanced panel data ([`panel_fill`](#filling-an-unbalanced-panel))
+  4. some custom logging function ([`custom_logger`](#custom-logging))
 
 Note that as the package grow in different directions, dependencies might become overwhelming.
 The readme serves as documentation; there might be more examples inside of the test folder.
@@ -20,7 +20,6 @@ The readme serves as documentation; there might be more examples inside of the t
 
 `Prototypes.jl` is a not yet a registered package.
 You can install it from github  via
-
 ```julia
 import Pkg
 Pkg.add(url="https://github.com/eloualiche/Prototypes.jl")
@@ -53,6 +52,7 @@ tabulate(df, [:x, :y], group_type = [:value, :type]) # mix value and types
 I have not implemented all the features of the stata tabulate function, but I am open to [suggestions](#3).
 
 
+
 ### Winsorize data
 
 There was no standard function to winsorize data in julia, so I implemented one.
@@ -60,10 +60,6 @@ This is fairly standard and I offer options to specify probabilities or cutpoint
 
 The test suit has a large set of all the different examples, but you can start using it like this:
 ```julia
-using DataFrames
-using Prototypes
-using PalmerPenguins
-
 df = DataFrame(PalmerPenguins.load())
 winsorize(df.flipper_length_mm, probs=(0.05, 0.95)) # skipmissing by default
 transform(df, :flipper_length_mm =>
@@ -71,7 +67,7 @@ transform(df, :flipper_length_mm =>
 ```
 
 
-### Panel Fill
+### Filling an unbalanced panel
 
 Sometimes it is unpractical to work with unbalanced panel data.
 There are many ways to fill values between dates (what interpolation to use) and I try to implement a few of them.
@@ -79,7 +75,7 @@ I use the function sparingly, so it has not been tested extensively.
 
 See the following example (or the test suite) for more information.
 ```julia
-df3 = DataFrame(        # missing t=2 for id=1
+df_panel = DataFrame(        # missing t=2 for id=1
     id = ["a","a", "b","b", "c","c","c", "d","d","d","d"],
     t  = [Date(1990, 1, 1), Date(1990, 4, 1), Date(1990, 8, 1), Date(1990, 9, 1),
           Date(1990, 1, 1), Date(1990, 2, 1), Date(1990, 4, 1),
@@ -88,11 +84,11 @@ df3 = DataFrame(        # missing t=2 for id=1
     v2 = [1,2,3,6,6,4,5, 1,2,3,4],
     v3 = [1,5,4,6,6,15,12.25, 21,22.5,17.2,1])
 
-panel_fill(df3, :id, :t, [:v1, :v2, :v3],
+panel_fill(df_panel, :id, :t, [:v1, :v2, :v3],
     gap=Month(1), method=:backwards, uniquecheck=true, flag=true, merge=true)
-panel_fill(df3, :id, :t, [:v1, :v2, :v3],
+panel_fill(df_panel, :id, :t, [:v1, :v2, :v3],
     gap=Month(1), method=:forwards, uniquecheck=true, flag=true, merge=true)
-panel_fill(df3, :id, :t, [:v1, :v2, :v3],
+panel_fill(df_panel, :id, :t, [:v1, :v2, :v3],
     gap=Month(1), method=:linear, uniquecheck=true, flag=true, merge=true)
 ```
 
@@ -123,7 +119,7 @@ custom_logger(
 ```
 
 
-### Future work ...
+## Future work ...
 
 I am writing some documentation that will a little more complete than this readme.
 
