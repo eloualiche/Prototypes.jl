@@ -58,7 +58,7 @@ I have not implemented all the features of the stata tabulate function, but I am
 There was no standard function to winsorize data in julia, so I implemented one.
 This is fairly standard and I offer options to specify probabilities or cutpoints; moreover you can replace the values that are winsorized with a missing, the cutpoints, or some specific values.
 
-The test suit has a large set of all the different examples, but you can start using it like this:
+The test suite has a large set of all the different examples, but you can start using it like this:
 ```julia
 df = DataFrame(PalmerPenguins.load())
 winsorize(df.flipper_length_mm, probs=(0.05, 0.95)) # skipmissing by default

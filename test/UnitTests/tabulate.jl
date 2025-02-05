@@ -27,6 +27,20 @@
     first_line = split(tab_stdout, '\n', limit=2)[1]
     @test all(x -> contains(first_line, x), ["island", "Freq", "Percent", "Cum"])
 
+    # test the type columns get properly passed
+    @test contains(tabulate(df, [:island, :species], group_type = [:type, :value], out=:string), 
+                   "island_typeof")
+    @test contains(tabulate(df, [:island, :species], group_type = [:value, :type], out=:string), 
+                   "species_typeof")
+
+    # test the twoway ad wide tabulate
+    df_twoway = tabulate(df, [:island, :species], format=:wide, out=:df);
+    @test names(df_twoway) == ["island", "Adelie", "Gentoo", "Chinstrap"]
+    @test nrow(df_twoway) == 3
+    df_twoway = tabulate(df, [:sex, :island, :species], format=:wide, out=:df);
+    @test names(df_twoway) == ["sex", "island", "Adelie", "Gentoo", "Chinstrap"]
+    @test nrow(df_twoway) == 6
+
     # on a specific dataset (see issue #1)
     df = DataFrame(x = [1, 2, 5, "NA", missing], y = ["a", "c", "b", "e", "d"])
     df_tab = tabulate(df, :x, reorder_cols=true, out=:df)
@@ -42,5 +56,8 @@
     @test nrow(tabulate(df, [:x, :y], group_type = [:type, :value], out=:df)) == 4 
     @test nrow(tabulate(df, [:x, :y], group_type = [:value, :type], out=:df)) == 4
 
+
 end
+
+
 

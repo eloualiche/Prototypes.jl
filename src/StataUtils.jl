@@ -27,11 +27,13 @@ This was forked from TexTables.jl and was inspired by https://github.com/matthie
     - `:value`: Group by the actual values in the column
     - `:type`: Group by the type of values in the column
     - `Vector{Symbol}`: Vector combining `:value` and `:type` for different columns
-- `reorder_cols::Bool=true`: Whether to sort the output by sortable columns
-- `out::Symbol=:stdout`: Output format:
-    - `:stdout`: Print formatted table to standard output (returns nothing)
-    - `:df`: Return the result as a DataFrame
-    - `:string`: Return the formatted table as a string
+- `reorder_cols::Bool=true`  Whether to sort the output by sortable columns
+- `format::Symbol=:long` How to present the results long or wide (stata twoway)
+- `format_stat::Symbol=:freq`  Which statistics to present for format :freq or :pct
+- `out::Symbol=:stdout`  Output format:
+    - `:stdout`  Print formatted table to standard output (returns nothing)
+    - `:df`  Return the result as a DataFrame
+    - `:string` Return the formatted table as a string
 
 
 # Returns
@@ -70,6 +72,8 @@ function tabulate(
     df::AbstractDataFrame, cols::Union{Symbol, Vector{Symbol}};
     group_type::Union{Symbol, Vector{Symbol}}=:value,
     reorder_cols::Bool=true,
+    format::Symbol=:long, 
+    format_stat::Symbol=:freq,
     out::Symbol=:stdout)
 
     if typeof(cols) <: Symbol # check if it's an array or just a point
@@ -77,6 +81,15 @@ function tabulate(
     else
         N_COLS = size(cols,1)
         # error("Only accepts one variable for now ...")
+    end
+
+    if !(format ∈ [:long, :wide])
+        if size(cols, 1) == 1
+            @warn "Converting format to :long"
+            format = :long
+        else
+            @error "Table format must be :long or :wide"
+        end
     end
 
     # Count the number of observations by `columns`: this is the main calculation
@@ -108,7 +121,6 @@ function tabulate(
         @error group_type_error_msg
     end
 
-
     if reorder_cols
         cols_sortable = [ # check whether it makes sense to sort on the variables
             name
@@ -122,55 +134,121 @@ function tabulate(
     end
     transform!(df_out, :pct => cumsum => :cum, :freq => (x-> Int.(x)) => :freq)
 
-    col_highlighters = vcat(
-        map(i -> (hl_col(i, crayon"cyan bold")), 1:N_COLS),
-        hl_custom_gradient(cols=(N_COLS+1), colorscheme=:Oranges_9, scale=maximum(df_out.freq)),
-        hl_custom_gradient(cols=(N_COLS+2), colorscheme=:Greens_9),
-        hl_custom_gradient(cols=(N_COLS+3), colorscheme=:Greens_9)
-    )
-    col_highlighters = Tuple(x for x in col_highlighters)
 
-
-    if out ∈ [:stdout, :df]
-
-        pretty_table(df_out;
-            hlines = [1],
-            vlines = [N_COLS],
-            alignment = vcat(repeat([:l], N_COLS), :c, :c, :c),
-            cell_alignment = reduce(push!,
-                map(i -> (i,1)=>:l, 1:N_COLS+3),
-                init=Dict{Tuple{Int64, Int64}, Symbol}()),
-            header = [string.(cols); "Freq."; "Percent"; "Cum"],
-            formatters = (ft_printf("%d", 1), ft_printf("%d", 3), ft_printf("%.3f", 4), ft_printf("%.2f", 5)),
-            highlighters = col_highlighters,
-            border_crayon = crayon"bold yellow",
-            header_crayon = crayon"bold light_green",
-            show_header = true,
+    if format == :long
+        col_highlighters = vcat(
+            map(i -> (hl_col(i, crayon"cyan bold")), 1:N_COLS),
+            hl_custom_gradient(cols=(N_COLS+1), colorscheme=:Oranges_9, scale=maximum(df_out.freq)),
+            hl_custom_gradient(cols=(N_COLS+2), colorscheme=:Greens_9),
+            hl_custom_gradient(cols=(N_COLS+3), colorscheme=:Greens_9)
         )
+        col_highlighters = Tuple(x for x in col_highlighters)
 
-        if out==:stdout
-            return(nothing)
-        elseif out==:df
-            return(df_out)
+        if out ∈ [:stdout, :df]
+
+            pretty_table(df_out;
+                hlines = [1],
+                vlines = [N_COLS],
+                alignment = vcat(repeat([:l], N_COLS), :c, :c, :c),
+                cell_alignment = reduce(push!,
+                    map(i -> (i,1)=>:l, 1:N_COLS+3),
+                    init=Dict{Tuple{Int64, Int64}, Symbol}()),
+                header = [string.(new_cols); "Freq."; "Percent"; "Cum"],
+                formatters = (ft_printf("%d", 1), ft_printf("%d", 3), ft_printf("%.3f", 4), ft_printf("%.2f", 5)),
+                highlighters = col_highlighters,
+                border_crayon = crayon"bold yellow",
+                header_crayon = crayon"bold light_green",
+                show_header = true,
+            )
+
+            if out==:stdout
+                return(nothing)
+            elseif out==:df
+                return(df_out)
+            end
+
+        elseif out==:string # this might be costly as I am regenerating the table.
+            pt = pretty_table(String, df_out;
+                hlines = [1],
+                vlines = [N_COLS],
+                alignment = vcat(repeat([:l], N_COLS), :c, :c, :c),
+                cell_alignment = reduce(push!,
+                    map(i -> (i,1)=>:l, 1:N_COLS+3),
+                    init=Dict{Tuple{Int64, Int64}, Symbol}()),
+                header = [string.(new_cols); "Freq."; "Percent"; "Cum"],
+                formatters = (ft_printf("%d", 1), ft_printf("%d", 3), ft_printf("%.3f", 4), ft_printf("%.2f", 5)),
+                highlighters = col_highlighters,
+                border_crayon = crayon"bold yellow",
+                header_crayon = crayon"bold light_green",
+                show_header = true,
+            )
+            return(pt)
         end
 
-    elseif out==:string # this might be costly as I am regenerating the table.
-        pt = pretty_table(String, df_out;
-            hlines = [1],
-            vlines = [N_COLS],
-            alignment = vcat(repeat([:l], N_COLS), :c, :c, :c),
-            cell_alignment = reduce(push!,
-                map(i -> (i,1)=>:l, 1:N_COLS+3),
-                init=Dict{Tuple{Int64, Int64}, Symbol}()),
-            header = [string.(cols); "Freq."; "Percent"; "Cum"],
-            formatters = (ft_printf("%d", 1), ft_printf("%d", 3), ft_printf("%.3f", 4), ft_printf("%.2f", 5)),
-            highlighters = col_highlighters,
-            border_crayon = crayon"bold yellow",
-            header_crayon = crayon"bold light_green",
-            show_header = true,
-        )
-        return(pt)
+    elseif format == :wide 
+
+        df_out = unstack(df_out, new_cols[1:(N_COLS-1)], new_cols[N_COLS], format_stat)
+
+        N_GROUP_COLS = N_COLS-1
+        N_VAR_COLS   = size(df_out, 2) - N_GROUP_COLS
+
+        col_highlighters = vcat(
+            map(i -> (hl_col(i, crayon"cyan bold")), 1:N_GROUP_COLS),
+            [ hl_custom_gradient(cols=i, colorscheme=:Greens_9, 
+                    scale = format_stat==:freq ? maximum(skipmissing(df_out[:, i])) : 1 )
+              for i in  range(1+N_GROUP_COLS; length=N_VAR_COLS) ]
+            )
+        col_highlighters = Tuple(x for x in col_highlighters)
+
+        if format_stat == :freq
+            formatters = vcat( 
+                [ ft_printf("%s", i) for i in 1:N_GROUP_COLS ],
+                [ ft_printf("%d", j) for j in range(1+N_GROUP_COLS; length=N_VAR_COLS) ]
+                )
+        elseif format_stat == :pct
+            formatters = vcat( 
+                [ ft_printf("%s", i) for i in 1:N_GROUP_COLS ],
+                [ ft_printf("%.2f", j) for j in range(1+N_GROUP_COLS; length=N_VAR_COLS) ]
+                )
+        end
+
+        if out ∈ [:stdout, :df]
+            pretty_table(df_out;
+                hlines = [1],
+                vlines = [0, N_GROUP_COLS],
+                alignment = vcat(repeat([:l], N_GROUP_COLS), repeat([:c], N_VAR_COLS)),
+                cell_alignment = reduce(push!,
+                    map(i -> (i,1)=>:l, 1:N_GROUP_COLS),
+                    init=Dict{Tuple{Int64, Int64}, Symbol}()),
+                formatters = Tuple(formatters),
+                highlighters = col_highlighters,
+                border_crayon = crayon"bold yellow",
+                header_crayon = crayon"bold light_green",
+                show_header = true,
+            )
+            if out==:stdout
+                return(nothing)
+            elseif out==:df
+                return(df_out)
+            end
+        elseif out==:string
+            pt = pretty_table(String, df_out;
+                hlines = [1],
+                vlines = [0, N_GROUP_COLS],
+                alignment = vcat(repeat([:l], N_GROUP_COLS), repeat([:c], N_VAR_COLS)),
+                cell_alignment = reduce(push!,
+                    map(i -> (i,1)=>:l, 1:N_GROUP_COLS),
+                    init=Dict{Tuple{Int64, Int64}, Symbol}()),
+                formatters = Tuple(formatters),
+                highlighters = col_highlighters,
+                border_crayon = crayon"bold yellow",
+                header_crayon = crayon"bold light_green",
+                show_header = true,
+            )
+            return(pt)
+        end
     end
+
 
 end
 # --------------------------------------------------------------------------------------------------
@@ -183,12 +261,19 @@ function hl_custom_gradient(;
     scale::Int=1)
 
     Highlighter(
-        (data, i, j) -> j==cols,
-        (h, data, i, j) -> begin
-            color = get(colorschemes[colorscheme], data[i, j], (0, scale))
-             return Crayon(foreground = (round(Int, color.r * 255),
-                                         round(Int, color.g * 255),
-                                         round(Int, color.b * 255)))
-    end)
+    (data, i, j) -> j == cols,
+    (h, data, i, j) -> begin
+        if ismissing(data[i, j])
+            return Crayon(foreground=(128, 128, 128))  # Use a default color for missing values
+        end
+        color = get(colorschemes[colorscheme], data[i, j], (0, scale))
+        return Crayon(foreground=(round(Int, color.r * 255),
+                                  round(Int, color.g * 255),
+                                  round(Int, color.b * 255)))
+    end
+)
+
+
+
 end
 # ------------------------------------------------------------------------------------------

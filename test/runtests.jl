@@ -16,7 +16,6 @@ const testsuite = [
     "tabulate", "winsorize", "panel_fill", "customlogger"
 ]
 
-
 ENV["DATADEPS_ALWAYS_ACCEPT"] = true # for data loading of PalmerPenguins
 # --------------------------------------------------------------------------------------------------
 
