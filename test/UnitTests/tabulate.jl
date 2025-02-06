@@ -60,23 +60,3 @@
 end
 
 
-# df = dropmissing(DataFrame(PalmerPenguins.load()))
-# cols = [:island, :species]
-# group_type = [:type, :value]
-# reorder_cols=true
-# format_tbl=:wide
-# format_stat=:freq
-# out=:df
-
-# tabulate(df, [:sex, :island, :species], format_tbl=format_tbl, group_type = [:value, :value, :type], out=:df);
-
-
-df = dropmissing(DataFrame(PalmerPenguins.load()))
-cols = [:island]
-# group_type = [:value]
-# reorder_cols=true
-# format_tbl=:wide
-# format_stat=:freq
-# out=:df
-
-tabulate(df, cols, group_type = [:value])
