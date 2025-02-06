@@ -88,7 +88,7 @@
     @test countlines(log_files[1]) == 0
     @test countlines(log_files[2]) == 0
     @test countlines(log_files[3]) == 0; # this is getting filtered out
-    @test countlines(log_files[4]) != 0 # TranscodingStreams write here
+    @test countlines(log_files[4]) != 0  # TranscodingStreams write here
     @test contains(log_content[4], r"HTTP"i)
 
 end

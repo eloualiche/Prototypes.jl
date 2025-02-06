@@ -15,7 +15,7 @@
     tab_string = String(take!(tab_buf))
     @test count(==('\n'), tab_string) == 5 # test number of lines expected
     first_line = split(tab_string, '\n', limit=2)[1]
-    @test all(x -> contains(first_line, x), ["island", "Freq", "Percent", "Cum"])
+    @test all(x -> contains(first_line, x), ["island", "Freq", "Percent", "Cum", "Hist."])
 
     # test the nothing output
     tab_stdout = tabulate(df, :island, out=:stdout)
@@ -25,7 +25,7 @@
     end
     @test count(==('\n'), tab_stdout) == 5 # test number of lines expected
     first_line = split(tab_stdout, '\n', limit=2)[1]
-    @test all(x -> contains(first_line, x), ["island", "Freq", "Percent", "Cum"])
+    @test all(x -> contains(first_line, x), ["island", "Freq", "Percent", "Cum", "Hist."])
 
     # test the type columns get properly passed
     @test contains(tabulate(df, [:island, :species], group_type = [:type, :value], out=:string), 
@@ -59,3 +59,24 @@
 
 end
 
+
+# df = dropmissing(DataFrame(PalmerPenguins.load()))
+# cols = [:island, :species]
+# group_type = [:type, :value]
+# reorder_cols=true
+# format_tbl=:wide
+# format_stat=:freq
+# out=:df
+
+# tabulate(df, [:sex, :island, :species], format_tbl=format_tbl, group_type = [:value, :value, :type], out=:df);
+
+
+df = dropmissing(DataFrame(PalmerPenguins.load()))
+cols = [:island]
+# group_type = [:value]
+# reorder_cols=true
+# format_tbl=:wide
+# format_stat=:freq
+# out=:df
+
+tabulate(df, cols, group_type = [:value])

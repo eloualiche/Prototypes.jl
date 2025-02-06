@@ -124,7 +124,6 @@ function tabulate(
     new_cols = sort(new_cols isa Symbol ? [new_cols] : new_cols, 
         by= x -> findfirst(==(replace(string(x), r"_typeof$" => "")), string.(cols)) )
 
-
     if reorder_cols
         cols_sortable = [ # check whether it makes sense to sort on the variables
             name
@@ -140,25 +139,36 @@ function tabulate(
 
 
     if format_tbl == :long
+
+        transform!(df_out, :freq => text_histogram => :freq_hist)
+
+        # highlighter with gradient for the freq/pct/cum columns (rest is blue)
         col_highlighters = vcat(
             map(i -> (hl_col(i, crayon"cyan bold")), 1:N_COLS),
             hl_custom_gradient(cols=(N_COLS+1), colorscheme=:Oranges_9, scale=maximum(df_out.freq)),
             hl_custom_gradient(cols=(N_COLS+2), colorscheme=:Greens_9),
-            hl_custom_gradient(cols=(N_COLS+3), colorscheme=:Greens_9)
+            hl_custom_gradient(cols=(N_COLS+3), colorscheme=:Greens_9),
         )
         col_highlighters = Tuple(x for x in col_highlighters)
+
+        # how to print the outcomes 
+        col_formatters = Tuple(vcat( 
+            [ ft_printf("%s", i) for i in 1:N_COLS ],
+            [ ft_printf("%d", N_COLS+1), ft_printf("%.3f", N_COLS+2), ft_printf("%.3f", N_COLS+3),
+              ft_printf("%s", N_COLS+4) ]
+            ) )
 
         if out ∈ [:stdout, :df]
 
             pretty_table(df_out;
                 hlines = [1],
                 vlines = [N_COLS],
-                alignment = vcat(repeat([:l], N_COLS), :c, :c, :c),
+                alignment = vcat(repeat([:l], N_COLS), :c, :c, :c, :c),
                 cell_alignment = reduce(push!,
                     map(i -> (i,1)=>:l, 1:N_COLS+3),
                     init=Dict{Tuple{Int64, Int64}, Symbol}()),
-                header = [string.(new_cols); "Freq."; "Percent"; "Cum"],
-                formatters = (ft_printf("%d", 1), ft_printf("%d", 3), ft_printf("%.3f", 4), ft_printf("%.2f", 5)),
+                header = [string.(new_cols); "Freq."; "Percent"; "Cum"; "Hist."],
+                formatters =  col_formatters,
                 highlighters = col_highlighters,
                 border_crayon = crayon"bold yellow",
                 header_crayon = crayon"bold light_green",
@@ -175,12 +185,12 @@ function tabulate(
             pt = pretty_table(String, df_out;
                 hlines = [1],
                 vlines = [N_COLS],
-                alignment = vcat(repeat([:l], N_COLS), :c, :c, :c),
+                alignment = vcat(repeat([:l], N_COLS), :c, :c, :c, :c),
                 cell_alignment = reduce(push!,
                     map(i -> (i,1)=>:l, 1:N_COLS+3),
                     init=Dict{Tuple{Int64, Int64}, Symbol}()),
-                header = [string.(new_cols); "Freq."; "Percent"; "Cum"],
-                formatters = (ft_printf("%d", 1), ft_printf("%d", 3), ft_printf("%.3f", 4), ft_printf("%.2f", 5)),
+                header = [string.(new_cols); "Freq."; "Percent"; "Cum"; "Hist."],
+                formatters =  col_formatters,
                 highlighters = col_highlighters,
                 border_crayon = crayon"bold yellow",
                 header_crayon = crayon"bold light_green",
@@ -277,7 +287,39 @@ function hl_custom_gradient(;
     end
 )
 
-
-
 end
-# ------------------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------------
+
+
+# --------------------------------------------------------------------------------------------------
+# From https://github.com/mbauman/Sparklines.jl/blob/master/src/Sparklines.jl
+# Sparklines.jl
+const ticks = ['▁','▂','▃','▄','▅','▆','▇','█']
+
+function spark(x)
+    min, max = extrema(x)
+    f = div((max - min) * 2^8, length(ticks)-1)
+    f < 1 && (f = one(typeof(f)))
+    idxs = convert(Vector{Int}, map(v -> div(v, f), (x .- min) * 2^8))
+    return string.(ticks[idxs.+1])
+end
+
+# Unicode characters: 
+# █ (Full block, U+2588)
+# ⣿ (Full Braille block, U+28FF)
+# ▓ (Dark shade, U+2593)
+# ▒ (Medium shade, U+2592)
+# ░ (Light shade, U+2591)
+# ◼ (Small black square, U+25FC)
+function text_histogram(frequencies; width=12, blocks="░")
+    total = sum(frequencies)
+    total == 0 && return fill(" " ^ width, length(frequencies))  # Handle all-zero case
+    
+    scale = width / total  # Normalize frequencies relative to total sum
+    [rpad(repeat(blocks, max(1, floor(Int, f * scale))), width) for f in frequencies]
+end
+# --------------------------------------------------------------------------------------------------
+
+
+
+
