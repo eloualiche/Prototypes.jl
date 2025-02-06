@@ -311,12 +311,29 @@ end
 # ▒ (Medium shade, U+2592)
 # ░ (Light shade, U+2591)
 # ◼ (Small black square, U+25FC)
-function text_histogram(frequencies; width=12, blocks="░")
+# function text_histogram(frequencies; width=12, blocks="░")
+#     total = sum(frequencies)
+#     total == 0 && return fill(" " ^ width, length(frequencies))  # Handle all-zero case
+    
+#     scale = width / total  # Normalize frequencies relative to total sum
+#     [rpad(repeat(blocks, max(1, floor(Int, f * scale))), width) for f in frequencies]
+# end
+
+function text_histogram(frequencies; width=12)
+    blocks = [" ", "▏", "▎", "▍", "▌", "▋", "▊", "▉", "█"]  # 8 partial + full block
     total = sum(frequencies)
     total == 0 && return fill(" " ^ width, length(frequencies))  # Handle all-zero case
+
+    scale = (width * 8) / total  # Scale into 120 subunits (12 * 8)
     
-    scale = width / total  # Normalize frequencies relative to total sum
-    [rpad(repeat(blocks, max(1, floor(Int, f * scale))), width) for f in frequencies]
+    function bar(f)
+        units = round(Int, f * scale)  # Convert frequency to subunit count
+        full_blocks = div(units, 8)  # Count of full "█" blocks
+        remainder = units % 8  # Index for partial block
+        rpad(repeat("█", full_blocks) * blocks[remainder + 1], width)  # Construct bar
+    end
+
+    bar.(frequencies)
 end
 # --------------------------------------------------------------------------------------------------
 
