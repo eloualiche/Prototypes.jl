@@ -324,19 +324,17 @@ end
 # end
 
 function text_histogram(frequencies; width=12)
-    blocks = [" ", "▏", "▎", "▍", "▌", "▋", "▊", "▉", "█"]  # 8 partial + full block
-    total = sum(frequencies)
-    total == 0 && return fill(" " ^ width, length(frequencies))  # Handle all-zero case
-
-    scale = (width * 8) / total  # Scale into 120 subunits (12 * 8)
+    blocks = [" ", "▏", "▎", "▍", "▌", "▋", "▊", "▉", "█"]
+    max_freq = maximum(frequencies)
+    max_freq == 0 && return fill(" " ^ width, length(frequencies))
+    scale = (width * 8 - 1) / max_freq  # Subtract 1 to ensure we don't exceed width
     
     function bar(f)
-        units = round(Int, f * scale)  # Convert frequency to subunit count
-        full_blocks = div(units, 8)  # Count of full "█" blocks
-        remainder = units % 8  # Index for partial block
-        rpad(repeat("█", full_blocks) * blocks[remainder + 1], width)  # Construct bar
+        units = round(Int, f * scale)
+        full_blocks = div(units, 8)
+        remainder = units % 8
+        rpad(repeat("█", full_blocks) * blocks[remainder + 1], width)
     end
-
     bar.(frequencies)
 end
 # --------------------------------------------------------------------------------------------------
