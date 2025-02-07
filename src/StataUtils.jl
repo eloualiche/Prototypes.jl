@@ -170,6 +170,7 @@ function tabulate(
                 header = [string.(new_cols); "Freq."; "Percent"; "Cum"; "Hist."],
                 formatters =  col_formatters,
                 highlighters = col_highlighters,
+                vcrop_mode = :middle,
                 border_crayon = crayon"bold yellow",
                 header_crayon = crayon"bold light_green",
                 show_header = true,
@@ -192,6 +193,7 @@ function tabulate(
                 header = [string.(new_cols); "Freq."; "Percent"; "Cum"; "Hist."],
                 formatters =  col_formatters,
                 highlighters = col_highlighters,
+                crop = :none, # no crop for string output
                 border_crayon = crayon"bold yellow",
                 header_crayon = crayon"bold light_green",
                 show_header = true,
@@ -236,6 +238,7 @@ function tabulate(
                     init=Dict{Tuple{Int64, Int64}, Symbol}()),
                 formatters = Tuple(formatters),
                 highlighters = col_highlighters,
+                vcrop_mode = :middle,
                 border_crayon = crayon"bold yellow",
                 header_crayon = crayon"bold light_green",
                 show_header = true,
@@ -255,6 +258,7 @@ function tabulate(
                     init=Dict{Tuple{Int64, Int64}, Symbol}()),
                 formatters = Tuple(formatters),
                 highlighters = col_highlighters,
+                crop = :none, # no crop for string output
                 border_crayon = crayon"bold yellow",
                 header_crayon = crayon"bold light_green",
                 show_header = true,
