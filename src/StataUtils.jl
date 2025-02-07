@@ -140,7 +140,7 @@ function tabulate(
 
     if format_tbl == :long
 
-        transform!(df_out, :freq => text_histogram => :freq_hist)
+        transform!(df_out, :freq => (x->text_histogram(x, width=24)) => :freq_hist)
 
         # highlighter with gradient for the freq/pct/cum columns (rest is blue)
         col_highlighters = vcat(
