@@ -42,7 +42,7 @@ struct FileSink <: LogSink
     function FileSink(filename::AbstractString; create_files::Bool=false)
         files = get_log_filenames(filename; create_files=create_files)
         if create_files
-            @info "Creating four different files for logging ... \n ⮑\t$(join(log_files, "\n\t"))"
+            @info "Creating four different files for logging ... \n ⮑\t$(join(files, "\n\t"))"
         else
            @info "Only one sink provided ... \n\tAll logs will be written without differentiation on $filename"
         end
