@@ -310,7 +310,8 @@ function custom_format(io, log_record;
             end
         end
     elseif log_format == :log4j
-        log_entry = "$timestamp $log_level $module_name[$file:$line] - $formatted_message"
+        # we put everything on one line for clear logging ... 
+        log_entry = "$timestamp $log_level $module_name[$file:$line] - $(replace(formatted_message, "\n" => " | "))"
         # Print the log entry
         println(io, log_entry)
     end
