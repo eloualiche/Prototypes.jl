@@ -102,10 +102,32 @@
     @debug "DEBUG MESSAGE"
     log_file = get_log_names(logger_single)[1]
     log_content = read(log_file, String)
-    @test contains(log_content, r"Error .* ERROR MESSAGE")
-    @test contains(log_content, r"Warn .* WARN MESSAGE")
-    @test contains(log_content, r"Info .* INFO MESSAGE")
-    @test contains(log_content, r"Debug .* DEBUG MESSAGE")
+    @test contains(log_content, r"ERROR .* ERROR MESSAGE")
+    @test contains(log_content, r"WARN .* WARN MESSAGE")
+    @test contains(log_content, r"INFO .* INFO MESSAGE")
+    @test contains(log_content, r"DEBUG .* DEBUG MESSAGE")
     close_logger(logger_single, remove_files=true)
+
+    # -- logger with formatting and truncation
+    logger_single = custom_logger(
+        log_path;
+        log_format=:log4j,
+        shorten_path=:truncate_middle,
+        overwrite=true) 
+    @error "ERROR MESSAGE"
+    @warn "WARN MESSAGE"
+    @info "INFO MESSAGE"
+    @debug "DEBUG MESSAGE"
+    HTTP.get("http://example.com");
+    log_file = get_log_names(logger_single)[1]
+    log_content = read(log_file, String)
+    # println(log_content)
+    @test contains(log_content, r"ERROR .* ERROR MESSAGE")
+    @test contains(log_content, r"WARN .* WARN MESSAGE")
+    @test contains(log_content, r"INFO .* INFO MESSAGE")
+    @test contains(log_content, r"DEBUG .* DEBUG MESSAGE")
+    @test contains(log_content, "…")
+    close_logger(logger_single, remove_files=true)
+
 
 end

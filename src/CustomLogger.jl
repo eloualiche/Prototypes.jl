@@ -98,6 +98,7 @@ function custom_logger(
     log_time_format::AbstractString="HH:MM:SS",
     displaysize::Tuple{Int,Int}=(50,100),
     log_format::Symbol=:pretty, 
+    shorten_path::Symbol=:no,
     verbose::Bool=false)
 
     # warning if some non imported get filtered ...
@@ -161,7 +162,8 @@ function custom_logger(
         displaysize=displaysize,
         log_date_format=log_date_format,
         log_time_format=log_time_format,
-        log_format=log_format)
+        log_format=log_format,
+        shorten_path=shorten_path)
 
     # Create demux_logger using sink's IO streams
     demux_logger = TeeLogger(
@@ -245,7 +247,8 @@ function custom_format(io, log_record;
     displaysize::Tuple{Int,Int}=(50,100),
     log_date_format::AbstractString="yyyy-mm-dd", 
     log_time_format::AbstractString="HH:MM:SS",
-    log_format::Symbol = :pretty  # available pretty or log4j
+    log_format::Symbol=:pretty,  # available pretty or log4j
+    shorten_path::Symbol=:no     # see function below tried to emulate p10k
  )
 
     # colors
@@ -255,9 +258,9 @@ function custom_format(io, log_record;
 
     # Get some information!!
     module_name = log_record._module
-    file = log_record.file
     line = log_record.line
     level = log_record.level
+    log_level = rpad(uppercase(string(level)), 5)
 
     # separate what is log4j or pretty
     if log_format == :pretty
@@ -265,15 +268,17 @@ function custom_format(io, log_record;
         time = format(now(), log_time_format)
         timestamp = "$BOLD$time$RESET $EMPH$date$RESET"  # Apply bold only to the time
         color = get_color(level)
+        file = log_record.file
         source_info = " @ $module_name[$file:$line]"
         # Prepare the first part of the message prefix
-        first_line = "┌ [$timestamp] $color$level\033[0m | $source_info"
+        first_line = "┌ [$timestamp] $color$log_level\033[0m | $source_info"
         prefix_continuation_line = "│ "
         prefix_last_line = "└ "
     elseif log_format == :log4j
         date = format(now(), "yyyy-mm-dd")
         time = format(now(), "HH:MM:SS")
         timestamp = "$date $time"
+        file = shorten_path==:no ? log_record.file : shorten_path_str(log_record.file; strategy=shorten_path)
     end
 
     # -- format the message!!!
@@ -305,7 +310,7 @@ function custom_format(io, log_record;
             end
         end
     elseif log_format == :log4j
-        log_entry = "$timestamp $level $module_name[$file:$line] - $formatted_message"
+        log_entry = "$timestamp $log_level $module_name[$file:$line] - $formatted_message"
         # Print the log entry
         println(io, log_entry)
     end
@@ -313,6 +318,7 @@ function custom_format(io, log_record;
 
 end
 
+    
 
 
 
@@ -334,9 +340,115 @@ end
 # --------------------------------------------------------------------------------------------------
 
 
+# --------------------------------------------------------------------------------------------------
+"""
+    shorten_path(path::String; max_length::Int=40, strategy::Symbol=:truncate_middle)
 
+Shorten a file path to fit within max_length characters using various strategies.
+Available strategies:
+- :no
+- :truncate_middle - Truncates the middle of directory names
+- :truncate_to_last - Shows only the last n directories
+- :truncate_from_right - Truncates from the right side
+- :truncate_to_unique - Attempts to keep unique prefixes (simplified)
 
+Returns: Shortened path as a string
+"""
+function shorten_path_str(path::AbstractString; max_length::Int=40, strategy::Symbol=:truncate_middle)
 
+    strategy == :no && return path
+
+    # Return early if path is already short enough
+    if length(path) ≤ max_length
+        return path
+    end
+
+    # Split path into components
+    parts = split(path, '/')
+    is_absolute = startswith(path, '/')
+    
+    # Handle empty path or root directory
+    if isempty(parts) || (length(parts) == 1 && isempty(parts[1]))
+        return is_absolute ? "/" : ""
+    end
+
+    # Remove empty strings from split
+    parts = filter(!isempty, parts)
+
+    if strategy == :truncate_to_last
+        # Keep only the last few components
+        n = 2  # number of components to keep
+        if length(parts) > n
+            shortened = parts[end-n+1:end]
+            result = join(shortened, "/")
+            return is_absolute ? "/$result" : result
+        end
+    
+    elseif strategy == :truncate_middle
+        # For each component, truncate the middle if it's too long
+        function shorten_component(comp::AbstractString; max_comp_len::Int=10)
+            if length(comp) ≤ max_comp_len
+                return comp
+            end
+            keep = max_comp_len ÷ 2 - 1
+            return string(comp[1:keep], "…", comp[end-keep+1:end])
+        end
+
+        shortened = map(p -> shorten_component(p), parts)
+        result = join(shortened, "/")
+        if length(result) > max_length
+            # If still too long, drop some middle directories
+            middle_start = length(parts) ÷ 3
+            middle_end = 2 * length(parts) ÷ 3
+            shortened = [parts[1:middle_start]..., "…", parts[middle_end:end]...]
+            result = join(shortened, "/")
+        end
+        return is_absolute ? "/$result" : result
+
+    elseif strategy == :truncate_from_right
+        # Start removing characters from right side of each component
+        shortened = copy(parts)
+        while join(shortened, "/") |> length > max_length && any(length.(shortened) .> 3)
+            # Find longest component
+            idx = argmax(length.(shortened))
+            if length(shortened[idx]) > 3
+                shortened[idx] = shortened[idx][1:end-1]
+            end
+        end
+        result = join(shortened, "/")
+        return is_absolute ? "/$result" : result
+
+    elseif strategy == :truncate_to_unique
+        # Simplified unique prefix strategy
+        function unique_prefix(str::AbstractString, others::Vector{String}; min_len::Int=1)
+            for len in min_len:length(str)
+                prefix = str[1:len]
+                if !any(s -> s != str && startswith(s, prefix), others)
+                    return prefix
+                end
+            end
+            return str
+        end
+
+        # Get unique prefixes for each component
+        shortened = String[]
+        for (i, part) in enumerate(parts)
+            if i == 1 || i == length(parts)
+                push!(shortened, part)
+            else
+                prefix = unique_prefix(part, String.(parts))
+                push!(shortened, prefix)
+            end
+        end
+        
+        result = join(shortened, "/")
+        return is_absolute ? "/$result" : result
+    end
+
+    # Default fallback: return truncated original path
+    return string(path[1:max_length-3], "...")
+end
+# --------------------------------------------------------------------------------------------------
 
 
 
