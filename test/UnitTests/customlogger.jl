@@ -25,7 +25,6 @@
         global_logger(ConsoleLogger(stderr))
     end
 
-    
     log_path = joinpath.(tempdir(), "log")
 
     # -- logger with everything in one place ... 
@@ -90,5 +89,23 @@
     @test countlines(log_files[3]) == 0; # this is getting filtered out
     @test countlines(log_files[4]) != 0  # TranscodingStreams write here
     @test contains(log_content[4], r"HTTP"i)
+
+
+    # -- logger with formatting
+    logger_single = custom_logger(
+        log_path;
+        log_format=:log4j,
+        overwrite=true) 
+    @error "ERROR MESSAGE"
+    @warn "WARN MESSAGE"
+    @info "INFO MESSAGE"
+    @debug "DEBUG MESSAGE"
+    log_file = get_log_names(logger_single)[1]
+    log_content = read(log_file, String)
+    @test contains(log_content, r"Error .* ERROR MESSAGE")
+    @test contains(log_content, r"Warn .* WARN MESSAGE")
+    @test contains(log_content, r"Info .* INFO MESSAGE")
+    @test contains(log_content, r"Debug .* DEBUG MESSAGE")
+    close_logger(logger_single, remove_files=true)
 
 end

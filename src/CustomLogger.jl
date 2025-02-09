@@ -78,6 +78,7 @@ end
 - `log_date_format::AbstractString="yyyy-mm-dd"`: time stamp format at beginning of each logged lines for dates
 - `log_time_format::AbstractString="HH:MM:SS"`: time stamp format at beginning of each logged lines for times
 - `displaysize::Tuple{Int,Int}=(50,100)`: how much to show on log (same for all logs for now!)
+- `log_format::Symbol=:pretty`: how to format the log; I have added an option for log4j (all or nothing for now)
 - `overwrite::Bool=false`: do we overwrite previously created log files
 
 The custom_logger function creates four files in `output_dir` for four different levels of logging:
@@ -96,6 +97,7 @@ function custom_logger(
     log_date_format::AbstractString="yyyy-mm-dd",
     log_time_format::AbstractString="HH:MM:SS",
     displaysize::Tuple{Int,Int}=(50,100),
+    log_format::Symbol=:pretty, 
     verbose::Bool=false)
 
     # warning if some non imported get filtered ...
@@ -149,32 +151,39 @@ function custom_logger(
     module_specific_message_filter = create_absolute_filter(all_filters)
 
 
-    format_log = (io,log_record)->custom_format(io, log_record;
+    format_log_pretty = (io,log_record)->custom_format(io, log_record;
         displaysize=displaysize,
         log_date_format=log_date_format,
-        log_time_format=log_time_format)
+        log_time_format=log_time_format,
+        log_format=:pretty)
+
+    format_log_file = (io,log_record)->custom_format(io, log_record;
+        displaysize=displaysize,
+        log_date_format=log_date_format,
+        log_time_format=log_time_format,
+        log_format=log_format)
 
     # Create demux_logger using sink's IO streams
     demux_logger = TeeLogger(
         MinLevelLogger(
             EarlyFilteredLogger(module_absolute_message_filter, # error
-                FormatLogger(format_log, sink.ios[1])),
+                FormatLogger(format_log_file, sink.ios[1])),
             Logging.Error),
         MinLevelLogger(
             EarlyFilteredLogger(module_absolute_message_filter, # warn
-                FormatLogger(format_log, sink.ios[2])),
+                FormatLogger(format_log_file, sink.ios[2])),
             Logging.Warn),
         MinLevelLogger(
             EarlyFilteredLogger(module_specific_message_filter, # info
-                FormatLogger(format_log, sink.ios[3])),
+                FormatLogger(format_log_file, sink.ios[3])),
             Logging.Info),
         MinLevelLogger(
             EarlyFilteredLogger(module_absolute_message_filter, # debug
-                FormatLogger(format_log, sink.ios[4])),
+                FormatLogger(format_log_file, sink.ios[4])),
             Logging.Debug),
         MinLevelLogger(
             EarlyFilteredLogger(module_specific_message_filter, # stdout
-                FormatLogger(format_log, stdout)),
+                FormatLogger(format_log_pretty, stdout)),
             Logging.Info)
     )
 
@@ -234,7 +243,9 @@ end
 # Custom format function with box-drawing characters for wrap-around effect
 function custom_format(io, log_record;
     displaysize::Tuple{Int,Int}=(50,100),
-    log_date_format::AbstractString="yyyy-mm-dd", log_time_format::AbstractString="HH:MM:SS",
+    log_date_format::AbstractString="yyyy-mm-dd", 
+    log_time_format::AbstractString="HH:MM:SS",
+    log_format::Symbol = :pretty  # available pretty or log4j
  )
 
     # colors
@@ -242,48 +253,67 @@ function custom_format(io, log_record;
     EMPH = "\033[2m"
     RESET = "\033[0m"
 
-    date = format(now(), log_date_format)
-    time = format(now(), log_time_format)
-
-    timestamp = "$BOLD$time$RESET $EMPH$date$RESET"  # Apply bold only to the time
-
-    level = log_record.level
-    color = get_color(level)
-
-    # Format source
+    # Get some information!!
     module_name = log_record._module
     file = log_record.file
     line = log_record.line
-    source_info = " @ $module_name[$file:$line]"
+    level = log_record.level
 
-    # Prepare the first part of the message prefix
-    first_line = "┌ [$timestamp] $color$level\033[0m | $source_info"
-    prefix_continuation_line = "│ "
-    prefix_last_line = "└ "
+    # separate what is log4j or pretty
+    if log_format == :pretty
+        date = format(now(), log_date_format)
+        time = format(now(), log_time_format)
+        timestamp = "$BOLD$time$RESET $EMPH$date$RESET"  # Apply bold only to the time
+        color = get_color(level)
+        source_info = " @ $module_name[$file:$line]"
+        # Prepare the first part of the message prefix
+        first_line = "┌ [$timestamp] $color$level\033[0m | $source_info"
+        prefix_continuation_line = "│ "
+        prefix_last_line = "└ "
+    elseif log_format == :log4j
+        date = format(now(), "yyyy-mm-dd")
+        time = format(now(), "HH:MM:SS")
+        timestamp = "$date $time"
+    end
 
+    # -- format the message!!!
     # we view strings as simple and everything else as complex
     if log_record.message isa AbstractString
         formatted_message = log_record.message
     else
         buf = IOBuffer()
-        show(IOContext(buf, :limit=>true, :compact=>true, :color=>true, :displaysize=>displaysize),
-            "text/plain", log_record.message)
+        if log_format == :pretty
+            show(IOContext(buf, :limit=>true, :compact=>true, :color=>true, :displaysize=>displaysize),
+                "text/plain", log_record.message)
+        elseif log_format == :log4j
+            show(IOContext(buf, :limit => true, :compact => true, :displaysize => (50, 100)),
+                "text/plain", log_record.message)
+        end
         formatted_message = String(take!(buf))
     end
 
-    message_lines = split(formatted_message, "\n")
-    num_lines = length(message_lines)
-    # printing
-    println(io, "$first_line")
-    for (index, line) in enumerate(message_lines)
-        if index < num_lines
-            println(io, "$prefix_continuation_line$line")
-        else  # Last line
-            println(io, "$prefix_last_line$line")
+    if log_format == :pretty 
+        message_lines = split(formatted_message, "\n")
+        num_lines = length(message_lines)
+        # printing
+        println(io, "$first_line")
+        for (index, line) in enumerate(message_lines)
+            if index < num_lines
+                println(io, "$prefix_continuation_line$line")
+            else  # Last line
+                println(io, "$prefix_last_line$line")
+            end
         end
+    elseif log_format == :log4j
+        log_entry = "$timestamp $level $module_name[$file:$line] - $formatted_message"
+        # Print the log entry
+        println(io, log_entry)
     end
 
+
 end
+
+
 
 
 function get_color(level)
@@ -302,3 +332,12 @@ function get_color(level)
            RESET  # Default to no specific color
 end
 # --------------------------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
