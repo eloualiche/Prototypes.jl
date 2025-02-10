@@ -13,7 +13,7 @@ import LoggingExtras: ConsoleLogger, EarlyFilteredLogger, FileLogger, FormatLogg
     MinLevelLogger, TeeLogger, TransformerLogger
 import PrettyTables: Crayon, ft_printf, get, Highlighter, hl_col, pretty_table
 import Random: seed!
-import Statistics: quantile
+import StatsBase: quantile, UnitWeights, Weights
 # --------------------------------------------------------------------------------------------------
 
 
@@ -31,6 +31,7 @@ include("Winsorize.jl")
 export custom_logger
 export panel_fill, panel_fill!
 export tabulate 
+export xtile
 export winsorize
 # --------------------------------------------------------------------------------------------------
 

@@ -9,7 +9,8 @@
 
 # ------------------------------------------------------------------------------------------
 # List of exported functions
- # tabulate # (tab alias)
+# tabulate # (tab alias)
+# xtile
 # ------------------------------------------------------------------------------------------
 
 
@@ -57,7 +58,7 @@ See the README for more examples
 # Simple frequency table for one column
 tabulate(df, :country)
 
-# Group by value type
+## Group by value type
 tabulate(df, :age, group_type=:type)
 
 # Multiple columns with mixed grouping
@@ -296,6 +297,57 @@ end
 
 
 # --------------------------------------------------------------------------------------------------
+
+"""
+    xtile(data::Vector{T}, n_quantiles::Integer, 
+                 weights::Union{Vector{Float64}, Nothing}=nothing)::Vector{Int} where T <: Real
+
+Create quantile groups using Julia's built-in weighted quantile functionality.
+
+# Arguments
+- `data`: Values to group
+- `n_quantiles`: Number of groups
+- `weights`: Optional weights of weight type (StatasBase)
+
+# Examples
+```julia
+sales = rand(10_000);
+a = xtile(sales, 10);
+b = xtile(sales, 10, weights=Weights(repeat([1], length(sales))) );
+@assert a == b
+```
+"""
+function xtile(
+    data::AbstractVector{T}, 
+    n_quantiles::Integer;
+    weights::Union{Weights{<:Real}, Nothing} = nothing
+)::Vector{Int} where T 
+    
+    # For categorical or string types, we don't need weights or quantiles in the same way
+    if eltype(data) <: AbstractString # || eltype(data) <: PooledArrays.PooledVector
+        # Handle categorical data (string or PooledVector) with weights
+        if weights === nothing
+            weights = UnitWeights{Int}(length(data))
+        end
+        # Assign weights to each category
+        category_weights = [sum(weights[data .== category]) for category in unique(data)]
+        # Sort categories based on the weighted cumulative sum
+        sorted_categories = sortperm(category_weights, rev=true)
+        cuts = unique(data)[sorted_categories][1:round(Int, length(sorted_categories) / n_quantiles):end]
+    else
+        # Handle numeric data with weights
+        probs = range(0, 1, length=n_quantiles + 1)[2:end]
+        w = weights === nothing ? UnitWeights{T}(length(data)) : weights
+        cuts = quantile(collect(data), w, probs)
+    end 
+
+    return searchsortedlast.(Ref(cuts), data)
+end
+# --------------------------------------------------------------------------------------------------
+
+
+
+# --------------------------------------------------------------------------------------------------
 # From https://github.com/mbauman/Sparklines.jl/blob/master/src/Sparklines.jl
 # Sparklines.jl
 const ticks = ['▁','▂','▃','▄','▅','▆','▇','█']
@@ -315,13 +367,6 @@ end
 # ▒ (Medium shade, U+2592)
 # ░ (Light shade, U+2591)
 # ◼ (Small black square, U+25FC)
-# function text_histogram(frequencies; width=12, blocks="░")
-#     total = sum(frequencies)
-#     total == 0 && return fill(" " ^ width, length(frequencies))  # Handle all-zero case
-    
-#     scale = width / total  # Normalize frequencies relative to total sum
-#     [rpad(repeat(blocks, max(1, floor(Int, f * scale))), width) for f in frequencies]
-# end
 
 function text_histogram(frequencies; width=12)
     blocks = [" ", "▏", "▎", "▍", "▌", "▋", "▊", "▉", "█"]

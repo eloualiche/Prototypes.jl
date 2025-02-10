@@ -51,6 +51,14 @@ tabulate(df, [:x, :y], group_type = [:value, :type]) # mix value and types
 
 I have not implemented all the features of the stata tabulate function, but I am open to [suggestions](#3).
 
+### xtile
+
+See the doc
+```julia
+sales = rand(10_000);
+a = xtile(sales, 10);
+b = xtile(sales, 10, weights=Weights(repeat([1], length(sales))) );
+```
 
 
 ### Winsorize data
