@@ -9,7 +9,7 @@ import HTTP
 import Logging: global_logger
 import LoggingExtras: ConsoleLogger, TeeLogger
 using Random
-import StatsBase: quantile, Weights
+import StatsBase: quantile, Weights, sample
 using StreamToString
 
 const testsuite = [

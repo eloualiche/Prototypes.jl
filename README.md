@@ -9,9 +9,10 @@
 So far the package provides a four functions
 
   1. tabulate some data ([`tabulate`](#tabulate-data))
-  2. winsorize some data ([`winsorize`](#winsorize-data))
-  3. fill unbalanced panel data ([`panel_fill`](#filling-an-unbalanced-panel))
-  4. some custom logging function ([`custom_logger`](#custom-logging))
+  2. create category based on quantile ([`xtile`](#xtile))
+  3. winsorize some data ([`winsorize`](#winsorize-data))
+  4. fill unbalanced panel data ([`panel_fill`](#filling-an-unbalanced-panel))
+  5. some custom logging function ([`custom_logger`](#custom-logging))
 
 Note that as the package grow in different directions, dependencies might become overwhelming.
 The readme serves as documentation; there might be more examples inside of the test folder.
@@ -58,6 +59,9 @@ See the doc
 sales = rand(10_000);
 a = xtile(sales, 10);
 b = xtile(sales, 10, weights=Weights(repeat([1], length(sales))) );
+# works on strings
+cities = [randstr() for _ in 10]
+xtile(cities, 10)
 ```
 
 

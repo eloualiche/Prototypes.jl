@@ -11,6 +11,7 @@ import Interpolations: Linear, Constant, Previous, Next, BSpline, interpolate
 import Logging: global_logger, Logging, Logging.Debug, Logging.Info, Logging.Warn
 import LoggingExtras: ConsoleLogger, EarlyFilteredLogger, FileLogger, FormatLogger, 
     MinLevelLogger, TeeLogger, TransformerLogger
+import Missings: disallowmissing
 import PrettyTables: Crayon, ft_printf, get, Highlighter, hl_col, pretty_table
 import Random: seed!
 import StatsBase: quantile, UnitWeights, Weights

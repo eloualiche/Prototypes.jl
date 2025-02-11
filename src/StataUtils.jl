@@ -321,27 +321,70 @@ function xtile(
     data::AbstractVector{T}, 
     n_quantiles::Integer;
     weights::Union{Weights{<:Real}, Nothing} = nothing
-)::Vector{Int} where T 
+)::Vector{Int} where T <: Real
     
-    # For categorical or string types, we don't need weights or quantiles in the same way
-    if eltype(data) <: AbstractString # || eltype(data) <: PooledArrays.PooledVector
-        # Handle categorical data (string or PooledVector) with weights
-        if weights === nothing
-            weights = UnitWeights{Int}(length(data))
-        end
-        # Assign weights to each category
-        category_weights = [sum(weights[data .== category]) for category in unique(data)]
-        # Sort categories based on the weighted cumulative sum
-        sorted_categories = sortperm(category_weights, rev=true)
-        cuts = unique(data)[sorted_categories][1:round(Int, length(sorted_categories) / n_quantiles):end]
-    else
-        # Handle numeric data with weights
+        N = length(data)
+        n_quantiles > N && (@warn "More quantiles than data")
+
         probs = range(0, 1, length=n_quantiles + 1)[2:end]
-        w = weights === nothing ? UnitWeights{T}(length(data)) : weights
-        cuts = quantile(collect(data), w, probs)
-    end 
+        if weights === nothing
+            weights = UnitWeights{T}(N)
+        end
+        cuts = quantile(collect(data), weights, probs)
 
     return searchsortedlast.(Ref(cuts), data)
+end
+
+# String version
+function xtile(
+    data::AbstractVector{T}, 
+    n_quantiles::Integer;
+    weights::Union{Weights{<:Real}, Nothing} = nothing
+)::Vector{Int} where T <: AbstractString
+    
+    if weights === nothing
+        weights = UnitWeights{Int}(length(data))
+    end
+    # Assign weights to each category
+    category_weights = [sum(weights[data .== category]) for category in unique(data)]
+    # Sort categories based on the weighted cumulative sum
+    sorted_categories = sortperm(category_weights, rev=true)
+    step = max(1, round(Int, length(sorted_categories) / n_quantiles))
+    cuts = unique(data)[sorted_categories][1:step:end]
+   
+    return searchsortedlast.(Ref(cuts), data)
+
+end
+
+# Dealing with missing and Numbers
+function xtile(
+    data::AbstractVector{T}, 
+    n_quantiles::Integer;
+    weights::Union{Weights{<:Real}, Nothing} = nothing
+)::Vector{Union{Int, Missing}} where {T <: Union{Missing, AbstractString, Number}}
+
+    # Determine the non-missing type
+    non_missing_type = Base.nonmissingtype(T)
+
+    # Identify valid (non-missing) data
+    data_notmissing_idx = findall(!ismissing, data)
+
+    if isempty(data_notmissing_idx)  # If all values are missing, return all missing
+        return fill(missing, length(data))
+    end
+
+    # Use @view to avoid unnecessary allocations but convert explicitly to non-missing type
+    valid_data = convert(Vector{non_missing_type}, @view data[data_notmissing_idx])
+    valid_weights = weights === nothing ? nothing : Weights(@view weights[data_notmissing_idx])
+
+    # Compute quantile groups on valid data
+    valid_result = xtile(valid_data, n_quantiles; weights=valid_weights)
+
+    # Allocate result array with correct type
+    result = Vector{Union{Int, Missing}}(missing, length(data))
+    result[data_notmissing_idx] .= valid_result  # Assign computed quantile groups
+
+    return result
 end
 # --------------------------------------------------------------------------------------------------
 
