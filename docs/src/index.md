@@ -1,3 +1,4 @@
-# Test
+# Prototypes.jl
 
-This is a test of the doc for `Prototypes.jl`
+Useful functions!
+

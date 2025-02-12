@@ -1,5 +1,6 @@
 #!/usr/bin/env julia
 push!(LOAD_PATH, "../src/")
+# import Pkg; Pkg.develop("../src")
 using Prototypes
 
 
@@ -14,14 +15,9 @@ makedocs(
         repo = "https://github.com/eloualiche/Prototypes.jl",
     ),
     repo = Remotes.GitHub("eloualiche", "Prototypes.jl"),
-
     sitename = "Prototypes.jl",
     modules  = [Prototypes],
     authors = "Erik Loualiche",
-    # remotes=Dict(
-    #     "Prototypes" => 
-    #         "https://github.com/eloualiche/Prototypes.jl"
-    #     ), 
     pages=[
         "Home" => "index.md",
         "Manual" => [

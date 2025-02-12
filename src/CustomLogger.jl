@@ -75,7 +75,7 @@ end
 - `log_date_format::AbstractString="yyyy-mm-dd"`: time stamp format at beginning of each logged lines for dates
 - `log_time_format::AbstractString="HH:MM:SS"`: time stamp format at beginning of each logged lines for times
 - `displaysize::Tuple{Int,Int}=(50,100)`: how much to show on log (same for all logs for now!)
-- `log_format::Symbol=:pretty`: how to format the log; I have added an option for log4j (all or nothing for now)
+- `log_format::Symbol=:log4j`: how to format the log files (stdout is always pretty); I have added an option for pretty (all or nothing for now)
 - `overwrite::Bool=false`: do we overwrite previously created log files
 
 The custom_logger function creates four files in `output_dir` for four different levels of logging:
@@ -94,7 +94,7 @@ function custom_logger(
     log_date_format::AbstractString="yyyy-mm-dd",
     log_time_format::AbstractString="HH:MM:SS",
     displaysize::Tuple{Int,Int}=(50,100),
-    log_format::Symbol=:pretty, 
+    log_format::Symbol=:log4j, 
     shorten_path::Symbol=:no,
     verbose::Bool=false)
 
@@ -361,9 +361,9 @@ Shorten a file path string to a specified maximum length using various strategie
 ```julia
 # Using different strategies
 julia> shorten_path_str("/very/long/path/to/file.txt", max_length=20)
-"/very/.../file.txt"
+"/very/…/path/to/file.txt"
 
-julia> shorten_path_str("/usr/local/bin/program", strategy=:truncate_to_last)
+julia> shorten_path_str("/usr/local/bin/program", strategy=:truncate_to_last, max_length=20)
 "/bin/program"
 
 julia> shorten_path_str("/home/user/documents/very_long_filename.txt", strategy=:truncate_middle)
@@ -371,7 +371,9 @@ julia> shorten_path_str("/home/user/documents/very_long_filename.txt", strategy=
 ```
 """
 function shorten_path_str(path::AbstractString; 
-    max_length::Int=40, strategy::Symbol=:truncate_middle)
+    max_length::Int=40, 
+    strategy::Symbol=:truncate_middle
+    )::AbstractString
 
     strategy == :no && return path
 
@@ -463,7 +465,7 @@ function shorten_path_str(path::AbstractString;
     end
 
     # Default fallback: return truncated original path
-    return string(path[1:max_length-3], "...")
+    return string(path[1:max_length-3], "…")
 end
 # --------------------------------------------------------------------------------------------------
 
