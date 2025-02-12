@@ -368,6 +368,7 @@ julia> shorten_path_str("/usr/local/bin/program", strategy=:truncate_to_last)
 
 julia> shorten_path_str("/home/user/documents/very_long_filename.txt", strategy=:truncate_middle)
 "/home/user/doc…ents/very_…name.txt"
+```
 """
 function shorten_path_str(path::AbstractString; 
     max_length::Int=40, strategy::Symbol=:truncate_middle)

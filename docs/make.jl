@@ -4,12 +4,17 @@ using Prototypes
 
 
 # -- 
-
 using Documenter
+using DocumenterVitepress
 
 # -- 
 makedocs(
-    format = Documenter.HTML(),
+    # format = Documenter.HTML(),
+    format = MarkdownVitepress(
+        repo = "https://github.com/eloualiche/Prototypes.jl",
+    ),
+    repo = Remotes.GitHub("eloualiche", "Prototypes.jl"),
+
     sitename = "Prototypes.jl",
     modules  = [Prototypes],
     authors = "Erik Loualiche",
@@ -33,16 +38,23 @@ makedocs(
 )
 
 
-
-
-
 deploydocs(;
     repo = "github.com/eloualiche/Prototypes.jl",
-    devbranch = "build",
-)
-
-deploydocs(;
-    repo = "github.com/eloualiche/Prototypes.jl",
-    target = "build",
+    target = "build", # this is where Vitepress stores its output
+    devbranch = "main",
     branch = "gh-pages",
+    push_preview = true,
 )
+
+
+# deploydocs(;
+#     repo = "github.com/eloualiche/Prototypes.jl",
+#     devbranch = "build",
+# )
+
+# deploydocs(;
+#     repo = "github.com/eloualiche/Prototypes.jl",
+#     target = "build",
+#     branch = "gh-pages",
+# )
+

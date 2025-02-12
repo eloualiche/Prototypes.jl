@@ -1,2 +1,10 @@
+# ---------------------------------------------------------
+# STANDARD JULIA IGNORE
 /Manifest.toml
+docs/build/
+docs/node_modules
 .DS_Store
+docs/.DS_Store
+.env
+.env.gpg
+# ---------------------------------------------------------
