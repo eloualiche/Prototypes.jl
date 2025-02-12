@@ -209,6 +209,8 @@ function tabulate(
         N_GROUP_COLS = N_COLS-1
         N_VAR_COLS   = size(df_out, 2) - N_GROUP_COLS
 
+        # TODO - add a total for rows and columns at the end C+1 col and R+1 row
+
         col_highlighters = vcat(
             map(i -> (hl_col(i, crayon"cyan bold")), 1:N_GROUP_COLS),
             [ hl_custom_gradient(cols=i, colorscheme=:Greens_9, 

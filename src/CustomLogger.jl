@@ -240,7 +240,8 @@ end
 
 # --------------------------------------------------------------------------------------------------
 # Custom format function with box-drawing characters for wrap-around effect
-function custom_format(io, log_record;
+# TODO should rewrite for multiple dispatch with different types for log_format
+function custom_format(io, log_record::NamedTuple;
     displaysize::Tuple{Int,Int}=(50,100),
     log_date_format::AbstractString="yyyy-mm-dd", 
     log_time_format::AbstractString="HH:MM:SS",
@@ -248,82 +249,161 @@ function custom_format(io, log_record;
     shorten_path::Symbol=:no     # see function below tried to emulate p10k
  )
 
-    # colors
-    BOLD = "\033[1m"
-    EMPH = "\033[2m"
-    RESET = "\033[0m"
+    # -- format the message!!!
+    formatted_message = reformat_msg(log_record; displaysize=displaysize)
+    
+    if log_format == :pretty 
 
-    # Get some information!!
-    module_name = log_record._module
-    line = log_record.line
-    level = log_record.level
-    log_level = rpad(uppercase(string(level)), 5)
-
-    # separate what is log4j or pretty
-    if log_format == :pretty
-        date = format(now(), log_date_format)
-        time = format(now(), log_time_format)
-        timestamp = "$BOLD$time$RESET $EMPH$date$RESET"  # Apply bold only to the time
-        color = get_color(level)
-        file = log_record.file
-        source_info = " @ $module_name[$file:$line]"
-        # Prepare the first part of the message prefix
-        first_line = "┌ [$timestamp] $color$log_level\033[0m | $source_info"
         prefix_continuation_line = "│ "
         prefix_last_line = "└ "
-    elseif log_format == :log4j
-        date = format(now(), "yyyy-mm-dd")
-        time = format(now(), "HH:MM:SS")
-        timestamp = "$date $time"
-        file = shorten_path==:no ? log_record.file : shorten_path_str(log_record.file; strategy=shorten_path)
-    end
 
-    # -- format the message!!!
-    # we view strings as simple and everything else as complex
-    if log_record.message isa AbstractString
-        formatted_message = log_record.message
-    else
-        buf = IOBuffer()
-        if log_format == :pretty
-            show(IOContext(buf, :limit=>true, :compact=>true, :color=>true, :displaysize=>displaysize),
-                "text/plain", log_record.message)
-        elseif log_format == :log4j
-            show(IOContext(buf, :limit => true, :compact => true, :displaysize => (50, 100)),
-                "text/plain", log_record.message)
-        end
-        formatted_message = String(take!(buf))
-    end
+        (first_line, message_lines) = format_pretty(log_record; 
+            log_date_format=log_date_format, log_time_format=log_time_format)
 
-    if log_format == :pretty 
-        message_lines = split(formatted_message, "\n")
-        num_lines = length(message_lines)
-        # printing
         println(io, "$first_line")
         for (index, line) in enumerate(message_lines)
-            if index < num_lines
+            if index < length(message_lines)
                 println(io, "$prefix_continuation_line$line")
             else  # Last line
                 println(io, "$prefix_last_line$line")
             end
         end
+
     elseif log_format == :log4j
-        # we put everything on one line for clear logging ... 
-        log_entry = "$timestamp $log_level $module_name[$file:$line] - $(replace(formatted_message, "\n" => " | "))"
-        # Print the log entry
+        log_entry = replace(
+            format_log4j(log_record, shorten_path=shorten_path), "\n" => " | ")
+        println(io, log_entry)
+    elseif log_format == :syslog
+        log_entry = replace(format_syslog(log_record), "\n" => " | ")
         println(io, log_entry)
     end
 
 
 end
-
     
 
+# --- general functions
+"""
+    reformat_msg
+    # we view strings as simple and everything else as complex
+"""
+function reformat_msg(log_record;
+        displaysize::Tuple{Int,Int}=(50,100),
+        log_format::Symbol=:pretty)::AbstractString
+
+    if log_record.message isa AbstractString
+        return log_record.message
+    else
+        buf = IOBuffer()
+        if log_format == :pretty
+            show(IOContext(buf, :limit=>true, :compact=>true, :color=>true, :displaysize=>displaysize),
+                "text/plain", log_record.message)
+        else #  log_format == :log4j
+            show(IOContext(buf, :limit => true, :compact => true, :displaysize => (50, 100)),
+                "text/plain", log_record.message)
+        end
+        formatted_message = String(take!(buf))
+    end
+    return formatted_message
+end
 
 
+# --- pretty format
+function format_pretty(log_record::NamedTuple;
+    log_date_format::AbstractString="yyyy-mm-dd", 
+    log_time_format::AbstractString="HH:MM:SS",
+    )::Tuple{AbstractString, Vector{AbstractString}}
+
+    BOLD = "\033[1m"
+    EMPH = "\033[2m"
+    RESET = "\033[0m"
+    T = now()
+
+    date = format(T, log_date_format)
+    time = format(T, log_time_format)
+    timestamp = "$BOLD$time$RESET $EMPH$date$RESET"  # Apply bold only to the time
+    log_level = log_record.level
+    level = string(log_level)
+    color = get_color(log_level)
+    module_name = log_record._module
+    file = log_record.file
+    line = log_record.line
+    source_info = " @ $module_name[$file:$line]"
+    # Prepare the first part of the message prefix
+    first_line = "┌ [$timestamp] $color$level\033[0m | $source_info"
+
+    formatted_message = reformat_msg(log_record, log_format=:pretty)
+
+    message_lines = split(formatted_message, "\n")
+
+    return (first_line, message_lines)
+
+end
+
+# --- log4j format
+function format_log4j(log_record::NamedTuple; 
+    shorten_path::Symbol=:no)::AbstractString
+
+    timestamp = format(now(), "yyyy-mm-dd HH:MM:SS")
+    log_level = rpad(uppercase(string(log_record.level)), 5)
+    module_name = log_record._module
+    file = shorten_path==:no ? log_record.file : shorten_path_str(log_record.file; strategy=shorten_path)
+    line = log_record.line
+    formatted_message = reformat_msg(log_record, log_format=:log4j)
+
+    log_entry = "$timestamp $log_level $module_name[$file:$line] - $(replace(formatted_message, "\n" => " | "))"
+    
+    return log_entry 
+
+end
+
+# --- syslog format! 
+# -----  for syslog mapping of severity! 
+const syslog_severity_map = Dict( # look at get color to get something nicer than a string call
+        "Info"  => 6,  # Informational
+        "Warn"  => 4,  # Warning
+        "Error" => 3,  # Error
+        "Debug" => 7   # Debugging
+    )
+# ----- where are the binaries!
+const julia_bin = Base.julia_cmd().exec[1]
+
+function format_syslog(log_record::NamedTuple)::AbstractString
+
+    timestamp = Dates.format(now(), ISODateTimeFormat)
+    file = log_record.file    
+    severity = get(syslog_severity_map, string(log_record.level), 6)  # Default to INFO
+    facility = 1  # User-level messages
+    pri = (facility * 8) + severity
+    hostname = gethostname()
+    pid = getpid()
+    # msg_id = haskey(log_record.metadata, "msg_id") ? log_record.metadata["msg_id"] : "-" # TODO
+    app_name = julia_bin
+        # msg_id = metadata["msg_id"] if haskey(metadata, "msg_id") else "-"
+    msg_id = "-"
+    # # Format structured data
+    # structured_data = ""
+    # if !isempty(metadata)
+    #     structured_data = "[" * join(["exp@32473 $(k)=\"$(v)\"" for (k, v) in metadata if k != "msg_id"], " ") * "]"
+    # else
+    structured_data = "-"
+    # end
+    formatted_message = reformat_msg(log_record, log_format=:syslog)
+
+    # we put everything on one line for clear logging ... 
+    log_entry = "<$pri>1 $timestamp $hostname $app_name $pid $msg_id $structured_data $(replace(formatted_message, "\n" => " | "))"
+    # Print the log entry println(io, log_entry)
+    return log_entry 
+
+end
+
+# --- pretty format 
+#-- colors for pretty
 function get_color(level)
 
     RESET = "\033[0m"
     BOLD = "\033[1m"
+    # ITALIC = 
     LIGHT_BLUE = "\033[94m"
     RED = "\033[31m"
     GREEN = "\033[32m"

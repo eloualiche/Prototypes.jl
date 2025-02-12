@@ -129,5 +129,28 @@
     @test contains(log_content, "…")
     close_logger(logger_single, remove_files=true)
 
+    # -- syslog logger
+    logger_single = custom_logger(
+        log_path;
+        log_format=:syslog,
+        shorten_path=:truncate_middle,
+        overwrite=true) 
+    @error "ERROR MESSAGE"
+    @warn "WARN MESSAGE"
+    @info "INFO MESSAGE"
+    @debug "DEBUG MESSAGE"
+    HTTP.get("http://example.com");
+    log_file = get_log_names(logger_single)[1]
+    log_content = read(log_file, String)
+    # println(log_content)
+    # we should test for the lines 
+    log_lines = split(log_content, "\n")
+    @test all(map(contains("ERROR"), filter(contains("<11>"), log_lines)))
+    @test all(map(contains("WARN"), filter(contains("<12>"), log_lines)))
+    @test all(map(contains("INFO"), filter(contains("<14>"), log_lines)))
+    @test any(map(contains("DEBUG"), filter(contains("<15>"), log_lines)))
+    close_logger(logger_single, remove_files=true)
+
+
 
 end
