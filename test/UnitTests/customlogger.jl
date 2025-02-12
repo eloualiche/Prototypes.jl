@@ -152,5 +152,4 @@
     close_logger(logger_single, remove_files=true)
 
 
-
 end

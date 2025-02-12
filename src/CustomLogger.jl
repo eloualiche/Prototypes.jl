@@ -270,11 +270,11 @@ function custom_format(io, log_record::NamedTuple;
         end
 
     elseif log_format == :log4j
-        log_entry = replace(
-            format_log4j(log_record, shorten_path=shorten_path), "\n" => " | ")
+        log_entry = log_record |> 
+            str -> format_log4j(str, shorten_path=shorten_path) |> msg_to_singline
         println(io, log_entry)
     elseif log_format == :syslog
-        log_entry = replace(format_syslog(log_record), "\n" => " | ")
+        log_entry = log_record |> format_syslog |> msg_to_singline
         println(io, log_entry)
     end
 
@@ -305,6 +305,17 @@ function reformat_msg(log_record;
         formatted_message = String(take!(buf))
     end
     return formatted_message
+end
+
+
+function msg_to_singline(message::AbstractString)::AbstractString
+    message |>
+        str -> replace(str, r"\"\"\"[\r\n\s]*(.+?)[\r\n\s]*\"\"\""s => s"\1") |>
+        str -> replace(str, r"\n\s*" => " | ") |>
+        str -> replace(str, r"\|\s*\|" => "|") |>
+        str -> replace(str, r"\s*\|\s*" => " | ") |>
+        str -> replace(str, r"\|\s*$" => "") |>
+        strip
 end
 
 
@@ -368,6 +379,9 @@ const syslog_severity_map = Dict( # look at get color to get something nicer tha
 # ----- where are the binaries!
 const julia_bin = Base.julia_cmd().exec[1]
 
+"""
+    format_syslog
+"""
 function format_syslog(log_record::NamedTuple)::AbstractString
 
     timestamp = Dates.format(now(), ISODateTimeFormat)
