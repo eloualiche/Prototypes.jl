@@ -13,9 +13,6 @@
 
 
 # --------------------------------------------------------------------------------------------------
-
-# CREATE an type LogSink that handles input that is one or many
-# TODO extend this to handle other things than just files ...
 abstract type LogSink end
 
 # Helper function to get filenames
@@ -343,19 +340,37 @@ end
 
 # --------------------------------------------------------------------------------------------------
 """
-    shorten_path(path::String; max_length::Int=40, strategy::Symbol=:truncate_middle)
+    shorten_path_str(path::AbstractString; max_length::Int=40, strategy::Symbol=:truncate_middle)
 
-Shorten a file path to fit within max_length characters using various strategies.
-Available strategies:
-- :no
-- :truncate_middle - Truncates the middle of directory names
-- :truncate_to_last - Shows only the last n directories
-- :truncate_from_right - Truncates from the right side
-- :truncate_to_unique - Attempts to keep unique prefixes (simplified)
+Shorten a file path string to a specified maximum length using various strategies.
 
-Returns: Shortened path as a string
+# Arguments
+- `path::AbstractString`: The input path to be shortened
+- `max_length::Int=40`: Maximum desired length of the output path
+- `strategy::Symbol=:truncate_middle`: Strategy to use for shortening. Options:
+  * `:no`: Return path unchanged
+  * `:truncate_middle`: Truncate middle of path components while preserving start/end
+  * `:truncate_to_last`: Keep only the last n components of the path
+  * `:truncate_from_right`: Progressively remove characters from right side of components
+  * `:truncate_to_unique`: Reduce components to unique prefixes
+
+# Returns
+- `String`: The shortened path
+
+# Examples
+```julia
+# Using different strategies
+julia> shorten_path_str("/very/long/path/to/file.txt", max_length=20)
+"/very/.../file.txt"
+
+julia> shorten_path_str("/usr/local/bin/program", strategy=:truncate_to_last)
+"/bin/program"
+
+julia> shorten_path_str("/home/user/documents/very_long_filename.txt", strategy=:truncate_middle)
+"/home/user/doc…ents/very_…name.txt"
 """
-function shorten_path_str(path::AbstractString; max_length::Int=40, strategy::Symbol=:truncate_middle)
+function shorten_path_str(path::AbstractString; 
+    max_length::Int=40, strategy::Symbol=:truncate_middle)
 
     strategy == :no && return path
 

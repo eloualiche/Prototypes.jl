@@ -393,15 +393,14 @@ end
 # --------------------------------------------------------------------------------------------------
 # From https://github.com/mbauman/Sparklines.jl/blob/master/src/Sparklines.jl
 # Sparklines.jl
-const ticks = ['▁','▂','▃','▄','▅','▆','▇','█']
-
-function spark(x)
-    min, max = extrema(x)
-    f = div((max - min) * 2^8, length(ticks)-1)
-    f < 1 && (f = one(typeof(f)))
-    idxs = convert(Vector{Int}, map(v -> div(v, f), (x .- min) * 2^8))
-    return string.(ticks[idxs.+1])
-end
+# const ticks = ['▁','▂','▃','▄','▅','▆','▇','█']
+# function spark(x)
+#     min, max = extrema(x)
+#     f = div((max - min) * 2^8, length(ticks)-1)
+#     f < 1 && (f = one(typeof(f)))
+#     idxs = convert(Vector{Int}, map(v -> div(v, f), (x .- min) * 2^8))
+#     return string.(ticks[idxs.+1])
+# end
 
 # Unicode characters: 
 # █ (Full block, U+2588)
