@@ -21,13 +21,10 @@ histogram(x, bins=-4:0.1:4, color="blue", label="distribution")
 ```
 
 Replace the outliers based on quantile
-```@example hist; continued=true
+```@example hist
 x_win = winsorize(x, probs=(0.05, 0.95));
-# histogram(x, bins=-4:0.1:4, color="blue", label="distribution"); 
-# histogram!(x_win, bins=-4:0.1:4, color="red", opacity=0.5, label="winsorized")
-histogram([x, x_win], bins=-4:0.1:4, 
-          color=["blue" "red"], opacity=[1.0 0.5], 
-          label=["distribution" "winsorized"])
+histogram(x, bins=-4:0.1:4, color="blue", label="distribution"); 
+histogram!(x_win, bins=-4:0.1:4, color="red", opacity=0.5, label="winsorized")
 ```
 
 It is possible to only trim one side
