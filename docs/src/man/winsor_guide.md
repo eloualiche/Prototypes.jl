@@ -27,7 +27,7 @@ savefig("p1.svg") # hide
 
 
 Replace the outliers based on quantile
-```@example hist
+```@example hist; continued=true
 x_win = winsorize(x, probs=(0.05, 0.95));
 p2 = histogram(x, bins=-4:0.1:4, color="blue", label="distribution"); 
 histogram!(x_win, bins=-4:0.1:4, color="red", opacity=0.5, label="winsorized");
@@ -140,7 +140,7 @@ Winsorize by groups
 transform!(
     groupby(df, :sex),
     :body_mass_g => (x -> winsorize(x, probs=(0.2, 0.8)) ) => :body_mass_g_w)
-histogram(df[ isequal.(df.sex, "male"), :body_mass_g], bins=3000:100:6300, color="blue", label="distribution"); 
+p9 = histogram(df[ isequal.(df.sex, "male"), :body_mass_g], bins=3000:100:6300, color="blue", label="distribution"); 
 histogram!(df[ isequal.(df.sex, "male"), :body_mass_g_w], bins=3000:100:6300, color="red", opacity=0.5, label="winsorized");
 savefig(p9, "p9.svg") # hide
 ```
