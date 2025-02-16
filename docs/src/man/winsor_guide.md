@@ -6,6 +6,7 @@ There is a [`winsor`](https://juliastats.org/StatsBase.jl/stable/robust/#StatsBa
 
 
 ```@setup hist
+import Pkg; Pkg.add("Plots");
 using Plots, Random
 gr(); theme(:wong2); Plots.default(display_type=:inline, size=(2000,1200), thickness_scaling=1)
 ```
@@ -68,6 +69,11 @@ histogram!(x_win, bins=-4:0.1:4, color="red", opacity=0.5, label="winsorized")
 ## Within a DataFrame
 
 I try to mimick the `gtools winsor` [example](https://raw.githubusercontent.com/mcaceresb/stata-gtools/master/docs/examples/gstats_winsor.do)
+
+```@setup dataframe
+import Pkg; 
+Pkg.add("DataFrames"); Pkg.add("Plots"); Pkg.add("almerPenguins");
+```
 
 
 ```@example dataframe
