@@ -72,7 +72,8 @@ I try to mimick the `gtools winsor` [example](https://raw.githubusercontent.com/
 
 ```@setup dataframe
 import Pkg; 
-Pkg.add("DataFrames"); Pkg.add("Plots"); Pkg.add("PalmerPenguins");
+Pkg.add("DataFrames"); Pkg.add("Plots");
+ Pkg.add("PalmerPenguins"); ENV["DATADEPS_ALWAYS_ACCEPT"] = true
 ```
 
 
