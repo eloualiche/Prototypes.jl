@@ -17,13 +17,12 @@ gr(); theme(:wong2); Plots.default(display_type=:inline, size=(2000,1200), thick
 Start with a simple distribution to visualize the effect of *winsorizing*
 ```@example hist
 Random.seed!(3); x = randn(10_000)
-histogram(x, bins=-4:0.1:4, color="blue", label="distribution", 
+p1 = histogram(x, bins=-4:0.1:4, color="blue", label="distribution", 
     framestyle=:box, size=(1250,750))
-savefig("p1.svg") # hide
-
+savefig("docs/src/assets/p1.svg") # hide 
 ```
 
-![](p1.svg)
+![](../assets/p1.svg)
 
 
 Replace the outliers based on quantile
@@ -31,7 +30,7 @@ Replace the outliers based on quantile
 x_win = winsorize(x, probs=(0.05, 0.95));
 p2 = histogram(x, bins=-4:0.1:4, color="blue", label="distribution"); 
 histogram!(x_win, bins=-4:0.1:4, color="red", opacity=0.5, label="winsorized");
-savefig(p2, "p2.svg") # hide
+# savefig(p2, "p2.svg") # hide
 ```
 
 ![](p2.svg)
@@ -41,7 +40,7 @@ It is possible to only trim one side
 x_win = winsorize(x, probs=(0, 0.8));
 p3 = histogram(x, bins=-4:0.1:4, color="blue", label="distribution"); 
 histogram!(x_win, bins=-4:0.1:4, color="red", opacity=0.5, label="winsorized");
-savefig(p3, "p3.svg") # hide
+# savefig(p3, "p3.svg") # hide
 ```
 
 ![](p3.svg)
@@ -52,7 +51,7 @@ Another type of winsorizing is to specify your own cutpoints (they do not have t
 x_win = winsorize(x, cutpoints=(-1.96, 2.575));
 p4 = histogram(x, bins=-4:0.1:4, color="blue", label="distribution"); 
 histogram!(x_win, bins=-4:0.1:4, color="red", opacity=0.5, label="winsorized");
-savefig(p4, "p4.svg") # hide
+# savefig(p4, "p4.svg") # hide
 ```
 
 ![](p4.svg)
@@ -63,7 +62,7 @@ If you do not specify either they will specified automatically
 x_win = winsorize(x; verbose=true);
 p5 = histogram(x, bins=-4:0.1:4, color="blue", label="distribution"); 
 histogram!(x_win, bins=-4:0.1:4, color="red", opacity=0.5, label="winsorized");
-savefig(p5, "p5.svg") # hide
+# savefig(p5, "p5.svg") # hide
 ```
 
 ![](p5.svg)
@@ -74,7 +73,7 @@ If you do not want to replace the value by the cutoffs, specify `replace_value=m
 x_win = winsorize(x, cutpoints=(-2.575, 1.96), replace_value=missing);
 p6 = histogram(x, bins=-4:0.1:4, color="blue", label="distribution"); 
 histogram!(x_win, bins=-4:0.1:4, color="red", opacity=0.5, label="winsorized");
-savefig(p6, "p6.svg") # hide
+# savefig(p6, "p6.svg") # hide
 ```
 
 ![](p6.svg)
@@ -85,7 +84,7 @@ The `replace_value` command gives you some flexibility to do whatever you want i
 x_win = winsorize(x, cutpoints=(-2.575, 1.96), replace_value=(-1.96, 1.28));
 p7 = histogram(x, bins=-4:0.1:4, color="blue", label="distribution"); 
 histogram!(x_win, bins=-4:0.1:4, color="red", opacity=0.5, label="winsorized");
-savefig(p7, "p7.svg") # hide
+# savefig(p7, "p7.svg") # hide
 ```
 
 ![](p7.svg)
@@ -114,7 +113,7 @@ Winsorize one variable
 transform!(df, :body_mass_g => (x -> winsorize(x, probs=(0.1, 0.9)) ) => :body_mass_g_w)
 p8 = histogram(df.body_mass_g, bins=2700:100:6300, color="blue", label="distribution"); 
 histogram!(df.body_mass_g_w, bins=2700:100:6300, color="red", opacity=0.5, label="winsorized");
-savefig(p8, "p8.svg") # hide
+# savefig(p8, "p8.svg") # hide
 ```
 
 ![](p8.svg)
@@ -142,7 +141,7 @@ transform!(
     :body_mass_g => (x -> winsorize(x, probs=(0.2, 0.8)) ) => :body_mass_g_w)
 p9 = histogram(df[ isequal.(df.sex, "male"), :body_mass_g], bins=3000:100:6300, color="blue", label="distribution"); 
 histogram!(df[ isequal.(df.sex, "male"), :body_mass_g_w], bins=3000:100:6300, color="red", opacity=0.5, label="winsorized");
-savefig(p9, "p9.svg") # hide
+# savefig(p9, "p9.svg") # hide
 ```
 
 ![](p9.svg)
