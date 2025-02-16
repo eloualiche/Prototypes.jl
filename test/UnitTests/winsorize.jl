@@ -14,6 +14,9 @@
     x1_win = winsorize(x1; cutpoints=(0.01, 0.99), verbose=true)
     @test findall(x1 .!= x1_win) == [4, 26, 52]
 
+    x1_win = winsorize(x1; cutpoints=(0, 0.9), verbose=true)
+    @test isequal(minimum(x1), minimum(x1_win))
+
 # --- tests with some missing
     x2_win = winsorize(x2, probs=(0.02, 0.98), verbose=true);
     @test size(x2) == size(x2_win)
