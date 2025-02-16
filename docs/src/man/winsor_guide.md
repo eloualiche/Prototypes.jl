@@ -19,10 +19,10 @@ Start with a simple distribution to visualize the effect of *winsorizing*
 Random.seed!(3); x = randn(10_000)
 p1 = histogram(x, bins=-4:0.1:4, color="blue", label="distribution", 
     framestyle=:box, size=(1250,750))
-savefig("docs/src/assets/p1.svg") # hide 
+savefig(p1, "p1.svg") # hide 
 ```
 
-![](../assets/p1.svg)
+![](p1.svg)
 
 
 Replace the outliers based on quantile
@@ -33,7 +33,7 @@ histogram!(x_win, bins=-4:0.1:4, color="red", opacity=0.5, label="winsorized");
 # savefig(p2, "p2.svg") # hide
 ```
 
-![](p2.svg)
+<!-- ![](p2.svg) -->
 
 It is possible to only trim one side
 ```@example hist; continued=true
@@ -43,7 +43,7 @@ histogram!(x_win, bins=-4:0.1:4, color="red", opacity=0.5, label="winsorized");
 # savefig(p3, "p3.svg") # hide
 ```
 
-![](p3.svg)
+<!-- ![](p3.svg) -->
 
 
 Another type of winsorizing is to specify your own cutpoints (they do not have to be symmetric):
@@ -54,7 +54,7 @@ histogram!(x_win, bins=-4:0.1:4, color="red", opacity=0.5, label="winsorized");
 # savefig(p4, "p4.svg") # hide
 ```
 
-![](p4.svg)
+<!-- ![](p4.svg) -->
 
 
 If you do not specify either they will specified automatically
@@ -65,7 +65,7 @@ histogram!(x_win, bins=-4:0.1:4, color="red", opacity=0.5, label="winsorized");
 # savefig(p5, "p5.svg") # hide
 ```
 
-![](p5.svg)
+<!-- ![](p5.svg) -->
 
 
 If you do not want to replace the value by the cutoffs, specify `replace_value=missing`:
@@ -76,7 +76,7 @@ histogram!(x_win, bins=-4:0.1:4, color="red", opacity=0.5, label="winsorized");
 # savefig(p6, "p6.svg") # hide
 ```
 
-![](p6.svg)
+<!-- ![](p6.svg) -->
 
 
 The `replace_value` command gives you some flexibility to do whatever you want in your outlier data transformation
@@ -87,7 +87,7 @@ histogram!(x_win, bins=-4:0.1:4, color="red", opacity=0.5, label="winsorized");
 # savefig(p7, "p7.svg") # hide
 ```
 
-![](p7.svg)
+<!-- ![](p7.svg) -->
 
 
 ## Within a DataFrame
@@ -116,7 +116,7 @@ histogram!(df.body_mass_g_w, bins=2700:100:6300, color="red", opacity=0.5, label
 # savefig(p8, "p8.svg") # hide
 ```
 
-![](p8.svg)
+<!-- ![](p8.svg) -->
 
 
 Winsorize multiple variables
@@ -144,6 +144,6 @@ histogram!(df[ isequal.(df.sex, "male"), :body_mass_g_w], bins=3000:100:6300, co
 # savefig(p9, "p9.svg") # hide
 ```
 
-![](p9.svg)
+<!-- ![](p9.svg) -->
 
 
