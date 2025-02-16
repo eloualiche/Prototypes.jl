@@ -49,12 +49,12 @@ df = DataFrame(x = [1, 2, 2, "NA", missing], y = ["c", "c", "b", "z", "d"])
 tabulate(df, [:x, :y], group_type = :type) # only types for all group variables
 tabulate(df, [:x, :y], group_type = [:value, :type]) # mix value and types
 ```
-
 I have not implemented all the features of the stata tabulate function, but I am open to [suggestions](#3).
+
 
 ### xtile
 
-See the doc
+See the test suite for examples.
 ```julia
 sales = rand(10_000);
 a = xtile(sales, 10);
@@ -67,10 +67,10 @@ xtile(cities, 10)
 
 ### Winsorize data
 
-There was no standard function to winsorize data in julia, so I implemented one.
 This is fairly standard and I offer options to specify probabilities or cutpoints; moreover you can replace the values that are winsorized with a missing, the cutpoints, or some specific values.
+There is a [`winsor`](https://juliastats.org/StatsBase.jl/stable/robust/#StatsBase.winsor) function in StatsBase.jl but I think it's a little less full-featured.
 
-The test suite has a large set of all the different examples, but you can start using it like this:
+See the doc for [examples](https://eloualiche.github.io/Prototypes.jl/dev/man/winsor_guide)
 ```julia
 df = DataFrame(PalmerPenguins.load())
 winsorize(df.flipper_length_mm, probs=(0.05, 0.95)) # skipmissing by default
@@ -104,13 +104,15 @@ panel_fill(df_panel, :id, :t, [:v1, :v2, :v3],
     gap=Month(1), method=:linear, uniquecheck=true, flag=true, merge=true)
 ```
 
+
 ### Custom Logging
 
 This one is a little niche.
 I wanted to have a custom logger that would allow me to filter messages from specific modules and redirect them to different files, which I find useful to monitor long jobs in a format that is easy to read and that I can control.
 The formatter is hard-coded to what I like but I guess I could change it easily and make it an option.
 
-Here is an example where you can create a custom logger and redirect logging to different files
+Here is an example where you can create a custom logger and redirect logging to different files.
+See the doc for more [examples](https://eloualiche.github.io/Prototypes.jl/dev/man/logger_guide)
 ```julia
 custom_logger(
         "./log/logfile-prefix";                                   # where are the files generated (will generate 4 files for different log levels)

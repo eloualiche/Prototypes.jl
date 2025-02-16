@@ -29,7 +29,7 @@ Replace the outliers based on quantile
 ```@example hist; 
 x_win = winsorize(x, probs=(0.05, 0.95));
 p2 = histogram(x, bins=-4:0.1:4, color="blue", label="distribution", framestyle=:box); 
-p2 = histogram!(x_win, bins=-4:0.1:4, color="red", opacity=0.5, label="winsorized")
+histogram!(x_win, bins=-4:0.1:4, color="red", opacity=0.5, label="winsorized")
 savefig(p2, "p2.svg"); nothing # hide
 ```
 ![](p2.svg)
@@ -40,7 +40,7 @@ It is possible to only trim one side
 x_win = winsorize(x, probs=(0, 0.8));
 p3 = histogram(x, bins=-4:0.1:4, color="blue", label="distribution", framestyle=:box);
 histogram!(x_win, bins=-4:0.1:4, color="red", opacity=0.5, label="winsorized");
-savefig(p3, "p3.svg"); # nothing # hide
+savefig(p3, "p3.svg"); nothing # hide
 ```
 ![](p3.svg)
 
@@ -50,7 +50,7 @@ Another type of winsorizing is to specify your own cutpoints (they do not have t
 x_win = winsorize(x, cutpoints=(-1.96, 2.575));
 p4 = histogram(x, bins=-4:0.1:4, color="blue", label="distribution", framestyle=:box); 
 histogram!(x_win, bins=-4:0.1:4, color="red", opacity=0.5, label="winsorized");
-savefig(p4, "p4.svg"); # nothing # hide
+savefig(p4, "p4.svg"); nothing # hide
 ```
 ![](p4.svg)
 
@@ -61,7 +61,7 @@ If you do not specify either they will specified automatically
 x_win = winsorize(x; verbose=true);
 p5 = histogram(x, bins=-4:0.1:4, color="blue", label="distribution", framestyle=:box); 
 histogram!(x_win, bins=-4:0.1:4, color="red", opacity=0.5, label="winsorized");
-savefig(p5, "p5.svg"); # nothing # hide
+savefig(p5, "p5.svg"); nothing # hide
 ```
 ![](p5.svg)
 
@@ -72,7 +72,7 @@ If you do not want to replace the value by the cutoffs, specify `replace_value=m
 x_win = winsorize(x, cutpoints=(-2.575, 1.96), replace_value=missing);
 p6 = histogram(x, bins=-4:0.1:4, color="blue", label="distribution", framestyle=:box); 
 histogram!(x_win, bins=-4:0.1:4, color="red", opacity=0.5, label="winsorized");
-savefig(p6, "p6.svg"); # nothing # hide
+savefig(p6, "p6.svg"); nothing # hide
 ```
 ![](p6.svg)
 
@@ -83,7 +83,7 @@ The `replace_value` command gives you some flexibility to do whatever you want i
 x_win = winsorize(x, cutpoints=(-2.575, 1.96), replace_value=(-1.96, 1.28));
 p7 = histogram(x, bins=-4:0.1:4, color="blue", label="distribution", framestyle=:box); 
 histogram!(x_win, bins=-4:0.1:4, color="red", opacity=0.5, label="winsorized");
-savefig(p7, "p7.svg"); # nothing # hide
+savefig(p7, "p7.svg"); nothing # hide
 ```
 ![](p7.svg)
 
