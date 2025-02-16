@@ -27,12 +27,13 @@ savefig(p1, "p1.svg"); nothing # hide
 Replace the outliers based on quantile
 ```@example hist; continued=true
 x_win = winsorize(x, probs=(0.05, 0.95));
-p2 = histogram(x, bins=-4:0.1:4, color="blue", label="distribution"); 
+p2 = histogram(x, bins=-4:0.1:4, color="blue", label="distribution", framestyle=:box, size=(1250,750))); 
 histogram!(x_win, bins=-4:0.1:4, color="red", opacity=0.5, label="winsorized");
-savefig(p2, "p2.svg"); nothing # hide
+savefig(p2, "p2.svg"); # nothing # hide
+# ![](p2.svg)
 ```
 
-# ![](p2.svg)
+
 
 
 It is possible to only trim one side
