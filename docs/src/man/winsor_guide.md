@@ -72,7 +72,7 @@ I try to mimick the `gtools winsor` [example](https://raw.githubusercontent.com/
 
 ```@setup dataframe
 import Pkg; 
-Pkg.add("DataFrames"); Pkg.add("Plots"); Pkg.add("almerPenguins");
+Pkg.add("DataFrames"); Pkg.add("Plots"); Pkg.add("PalmerPenguins");
 ```
 
 
