@@ -31,9 +31,9 @@ x_win = winsorize(x, probs=(0.05, 0.95));
 p2 = histogram(x, bins=-4:0.1:4, color="blue", label="distribution"); 
 histogram!(x_win, bins=-4:0.1:4, color="red", opacity=0.5, label="winsorized");
 # savefig(p2, "p2.svg") # hide
+# ![](p1.svg)
 ```
 
-<!-- ![](p2.svg) -->
 
 It is possible to only trim one side
 ```@example hist; continued=true
@@ -43,7 +43,6 @@ histogram!(x_win, bins=-4:0.1:4, color="red", opacity=0.5, label="winsorized");
 # savefig(p3, "p3.svg") # hide
 ```
 
-<!-- ![](p3.svg) -->
 
 
 Another type of winsorizing is to specify your own cutpoints (they do not have to be symmetric):
@@ -54,7 +53,6 @@ histogram!(x_win, bins=-4:0.1:4, color="red", opacity=0.5, label="winsorized");
 # savefig(p4, "p4.svg") # hide
 ```
 
-<!-- ![](p4.svg) -->
 
 
 If you do not specify either they will specified automatically
@@ -65,7 +63,6 @@ histogram!(x_win, bins=-4:0.1:4, color="red", opacity=0.5, label="winsorized");
 # savefig(p5, "p5.svg") # hide
 ```
 
-<!-- ![](p5.svg) -->
 
 
 If you do not want to replace the value by the cutoffs, specify `replace_value=missing`:
@@ -76,7 +73,6 @@ histogram!(x_win, bins=-4:0.1:4, color="red", opacity=0.5, label="winsorized");
 # savefig(p6, "p6.svg") # hide
 ```
 
-<!-- ![](p6.svg) -->
 
 
 The `replace_value` command gives you some flexibility to do whatever you want in your outlier data transformation
@@ -87,7 +83,6 @@ histogram!(x_win, bins=-4:0.1:4, color="red", opacity=0.5, label="winsorized");
 # savefig(p7, "p7.svg") # hide
 ```
 
-<!-- ![](p7.svg) -->
 
 
 ## Within a DataFrame
@@ -114,9 +109,8 @@ transform!(df, :body_mass_g => (x -> winsorize(x, probs=(0.1, 0.9)) ) => :body_m
 p8 = histogram(df.body_mass_g, bins=2700:100:6300, color="blue", label="distribution"); 
 histogram!(df.body_mass_g_w, bins=2700:100:6300, color="red", opacity=0.5, label="winsorized");
 # savefig(p8, "p8.svg") # hide
+# ![](p8.svg)
 ```
-
-<!-- ![](p8.svg) -->
 
 
 Winsorize multiple variables
@@ -142,8 +136,10 @@ transform!(
 p9 = histogram(df[ isequal.(df.sex, "male"), :body_mass_g], bins=3000:100:6300, color="blue", label="distribution"); 
 histogram!(df[ isequal.(df.sex, "male"), :body_mass_g_w], bins=3000:100:6300, color="red", opacity=0.5, label="winsorized");
 # savefig(p9, "p9.svg") # hide
+# ![](p9.svg)
 ```
 
-<!-- ![](p9.svg) -->
+
+
 
 
