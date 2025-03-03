@@ -141,9 +141,16 @@ function tabulate(
             sort!(df_out, cols_sortable)  # order before we build cumulative
         end
     end
-    transform!(df_out, :pct => cumsum => :cum, :freq => (x-> Int.(x)) => :freq)
+    transform!(df_out, :pct => cumsum => :cum, :freq => ByRow(Int) => :freq)
+    # easier to do some of the transformations on the numbers directly than using formatters
+    transform!(df_out, 
+        :pct => (x -> x .* 100), 
+        :cum => (x -> Int.(round.(x .* 100, digits=0))), renamecols=false)
 
 
+
+
+# ----- prepare the table
     if format_tbl == :long
 
         transform!(df_out, :freq => (x->text_histogram(x, width=24)) => :freq_hist)
@@ -152,17 +159,20 @@ function tabulate(
         col_highlighters = vcat(
             map(i -> (hl_col(i, crayon"cyan bold")), 1:N_COLS),
             hl_custom_gradient(cols=(N_COLS+1), colorscheme=:Oranges_9, scale=maximum(df_out.freq)),
-            hl_custom_gradient(cols=(N_COLS+2), colorscheme=:Greens_9),
-            hl_custom_gradient(cols=(N_COLS+3), colorscheme=:Greens_9),
+            hl_custom_gradient(cols=(N_COLS+2), colorscheme=:Greens_9,  scale=ceil(Int, maximum(df_out.pct))),
+            hl_custom_gradient(cols=(N_COLS+3), colorscheme=:Greens_9, scale=100),
         )
         col_highlighters = Tuple(x for x in col_highlighters)
 
-        # how to print the outcomes 
         col_formatters = Tuple(vcat( 
-            [ ft_printf("%s", i) for i in 1:N_COLS ],
-            [ ft_printf("%d", N_COLS+1), ft_printf("%.3f", N_COLS+2), ft_printf("%.3f", N_COLS+3),
-              ft_printf("%s", N_COLS+4) ]
-            ) )
+            [ ft_printf("%s", i) for i in 1:N_COLS ],   # Column values
+            [ 
+                ft_printf("%d", N_COLS+1),   # Frequency (integer)
+                ft_printf("%.1f", N_COLS+2),  
+                ft_printf("%d", N_COLS+3), # Cumulative
+                ft_printf("%s", N_COLS+4)    # Histogram
+            ]
+        ))
 
         if out ∈ [:stdout, :df]
 
@@ -210,37 +220,77 @@ function tabulate(
     elseif format_tbl == :wide 
 
         df_out = unstack(df_out, new_cols[1:(N_COLS-1)], new_cols[N_COLS], format_stat)
+        # new_cols[1:(N_COLS-1)] might be more than one category
+        # new_cols[N_COLS] only one group!
 
-        N_GROUP_COLS = N_COLS-1
+        N_GROUP_COLS = N_COLS - 1 # the first set of category (on the left!)
         N_VAR_COLS   = size(df_out, 2) - N_GROUP_COLS
 
-        # TODO - add a total for rows and columns at the end C+1 col and R+1 row
-
-        col_highlighters = vcat(
-            map(i -> (hl_col(i, crayon"cyan bold")), 1:N_GROUP_COLS),
-            [ hl_custom_gradient(cols=i, colorscheme=:Greens_9, 
-                    scale = format_stat==:freq ? maximum(skipmissing(df_out[:, i])) : 1 )
-              for i in  range(1+N_GROUP_COLS; length=N_VAR_COLS) ]
-            )
-        col_highlighters = Tuple(x for x in col_highlighters)
 
         if format_stat == :freq
+
+            # frequency we also show totals            
+            total_row_des = "Total by $(string(new_cols[N_COLS]))"
+            total_col_des = join(vcat("Total by ", join(string.(new_cols[1:(N_COLS-1)]), ", ")))
+
+            sum_cols = sum.(skipmissing.(eachcol(df_out[:, range(1+N_GROUP_COLS; length=N_VAR_COLS)])))
+            row_vector = vcat([total_row_des], repeat(["-"], max(0, N_GROUP_COLS-1)), sum_cols)                        
+            df_out = vcat(df_out, 
+                DataFrame(permutedims(row_vector)[:, end+1-size(df_out,2):end], names(df_out))
+                )
+            sum_rows = sum.(skipmissing.(eachrow(df_out[:, range(1+N_GROUP_COLS; length=N_VAR_COLS)])))
+            col_vector = rename(DataFrame(total = sum_rows), "total" => total_col_des)
+            df_out = hcat(df_out, col_vector)
+            rename!(df_out, [i => "-"^i for i in 1:N_GROUP_COLS])
+
+            col_highlighters = vcat(
+                map(i -> (hl_col(i, crayon"cyan bold")), 1:N_GROUP_COLS),
+                [ hl_custom_gradient(cols=i, colorscheme=:Greens_9, 
+                        scale = ceil(Int, maximum(skipmissing(df_out[1:end-1, i]))))
+                  for i in  range(1+N_GROUP_COLS; length=N_VAR_COLS) ],
+                hl_col(size(df_out, 2), crayon"green")
+            )
+           
             formatters = vcat( 
                 [ ft_printf("%s", i) for i in 1:N_GROUP_COLS ],
-                [ ft_printf("%d", j) for j in range(1+N_GROUP_COLS; length=N_VAR_COLS) ]
+                [ ft_printf("%d", j) for j in range(1+N_GROUP_COLS; length=N_VAR_COLS) ],
+                [ ft_printf("%d", 1+N_GROUP_COLS+N_VAR_COLS) ]
                 )
+
+            hlines = [1, size(df_out, 1)]
+            vlines = [N_GROUP_COLS, N_GROUP_COLS+N_VAR_COLS]
+            alignment = vcat(repeat([:l], N_GROUP_COLS), repeat([:c], N_VAR_COLS), [:r])
+
+
         elseif format_stat == :pct
+
+            col_highlighters = vcat(
+                map(i -> (hl_col(i, crayon"cyan bold")), 1:N_GROUP_COLS),
+                [ hl_custom_gradient(cols=i, colorscheme=:Greens_9, 
+                        scale = ceil(Int, maximum(skipmissing(df_out[:, i]))) )
+                  for i in  range(1+N_GROUP_COLS; length=N_VAR_COLS) ],
+            )
+
             formatters = vcat( 
                 [ ft_printf("%s", i) for i in 1:N_GROUP_COLS ],
-                [ ft_printf("%.2f", j) for j in range(1+N_GROUP_COLS; length=N_VAR_COLS) ]
+                [ ft_printf("%.1f", j) for j in range(1+N_GROUP_COLS; length=N_VAR_COLS) ]
                 )
+
+            hlines = [1]
+            vlines = [0]
+            alignment = vcat(repeat([:l], N_GROUP_COLS), repeat([:c], N_VAR_COLS))
+
+
         end
 
+        col_highlighters = Tuple(x for x in col_highlighters)
+
         if out ∈ [:stdout, :df]
+
             pretty_table(df_out;
-                hlines = [1],
-                vlines = [0, N_GROUP_COLS],
-                alignment = vcat(repeat([:l], N_GROUP_COLS), repeat([:c], N_VAR_COLS)),
+                hlines = hlines,
+                vlines = vlines,
+                alignment = alignment,
                 cell_alignment = reduce(push!,
                     map(i -> (i,1)=>:l, 1:N_GROUP_COLS),
                     init=Dict{Tuple{Int64, Int64}, Symbol}()),
@@ -250,17 +300,20 @@ function tabulate(
                 border_crayon = crayon"bold yellow",
                 header_crayon = crayon"bold light_green",
                 show_header = true,
+                show_subheader=false,
             )
+
             if out==:stdout
                 return(nothing)
             elseif out==:df
                 return(df_out)
             end
         elseif out==:string
+
             pt = pretty_table(String, df_out;
-                hlines = [1],
-                vlines = [0, N_GROUP_COLS],
-                alignment = vcat(repeat([:l], N_GROUP_COLS), repeat([:c], N_VAR_COLS)),
+                hlines = hlines,
+                vlines = vlines,
+                alignment = alignment,
                 cell_alignment = reduce(push!,
                     map(i -> (i,1)=>:l, 1:N_GROUP_COLS),
                     init=Dict{Tuple{Int64, Int64}, Symbol}()),
@@ -270,7 +323,9 @@ function tabulate(
                 border_crayon = crayon"bold yellow",
                 header_crayon = crayon"bold light_green",
                 show_header = true,
+                show_subheader = false,
             )
+
             return(pt)
         end
     end
@@ -301,6 +356,44 @@ function hl_custom_gradient(;
 
 end
 # --------------------------------------------------------------------------------------------------
+
+
+# --------------------------------------------------------------------------------------------------
+# From https://github.com/mbauman/Sparklines.jl/blob/master/src/Sparklines.jl
+# Sparklines.jl
+# const ticks = ['▁','▂','▃','▄','▅','▆','▇','█']
+# function spark(x)
+#     min, max = extrema(x)
+#     f = div((max - min) * 2^8, length(ticks)-1)
+#     f < 1 && (f = one(typeof(f)))
+#     idxs = convert(Vector{Int}, map(v -> div(v, f), (x .- min) * 2^8))
+#     return string.(ticks[idxs.+1])
+# end
+
+# Unicode characters: 
+# █ (Full block, U+2588)
+# ⣿ (Full Braille block, U+28FF)
+# ▓ (Dark shade, U+2593)
+# ▒ (Medium shade, U+2592)
+# ░ (Light shade, U+2591)
+# ◼ (Small black square, U+25FC)
+
+function text_histogram(frequencies; width=12)
+    blocks = [" ", "▏", "▎", "▍", "▌", "▋", "▊", "▉", "█"]
+    max_freq = maximum(frequencies)
+    max_freq == 0 && return fill(" " ^ width, length(frequencies))
+    scale = (width * 8 - 1) / max_freq  # Subtract 1 to ensure we don't exceed width
+    
+    function bar(f)
+        units = round(Int, f * scale)
+        full_blocks = div(units, 8)
+        remainder = units % 8
+        rpad(repeat("█", full_blocks) * blocks[remainder + 1], width)
+    end
+    bar.(frequencies)
+end
+# --------------------------------------------------------------------------------------------------
+
 
 
 # --------------------------------------------------------------------------------------------------
@@ -395,43 +488,6 @@ function xtile(
 end
 # --------------------------------------------------------------------------------------------------
 
-
-
-# --------------------------------------------------------------------------------------------------
-# From https://github.com/mbauman/Sparklines.jl/blob/master/src/Sparklines.jl
-# Sparklines.jl
-# const ticks = ['▁','▂','▃','▄','▅','▆','▇','█']
-# function spark(x)
-#     min, max = extrema(x)
-#     f = div((max - min) * 2^8, length(ticks)-1)
-#     f < 1 && (f = one(typeof(f)))
-#     idxs = convert(Vector{Int}, map(v -> div(v, f), (x .- min) * 2^8))
-#     return string.(ticks[idxs.+1])
-# end
-
-# Unicode characters: 
-# █ (Full block, U+2588)
-# ⣿ (Full Braille block, U+28FF)
-# ▓ (Dark shade, U+2593)
-# ▒ (Medium shade, U+2592)
-# ░ (Light shade, U+2591)
-# ◼ (Small black square, U+25FC)
-
-function text_histogram(frequencies; width=12)
-    blocks = [" ", "▏", "▎", "▍", "▌", "▋", "▊", "▉", "█"]
-    max_freq = maximum(frequencies)
-    max_freq == 0 && return fill(" " ^ width, length(frequencies))
-    scale = (width * 8 - 1) / max_freq  # Subtract 1 to ensure we don't exceed width
-    
-    function bar(f)
-        units = round(Int, f * scale)
-        full_blocks = div(units, 8)
-        remainder = units % 8
-        rpad(repeat("█", full_blocks) * blocks[remainder + 1], width)
-    end
-    bar.(frequencies)
-end
-# --------------------------------------------------------------------------------------------------
 
 
 

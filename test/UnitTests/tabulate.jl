@@ -4,6 +4,9 @@
     df = dropmissing(DataFrame(PalmerPenguins.load()))
     cols = :island
 
+    # Test that function do not error on empty
+    @test isnothing(tabulate(df[ df.island .== "Brehat", :], :sex))
+
     col_length = combine(groupby(df, cols), cols .=> length => :_N)
     sort!(col_length, cols)
     col_tab = tabulate(df, :island; out=:df);
@@ -35,11 +38,11 @@
 
     # test the twoway ad wide tabulate
     df_twoway = tabulate(df, [:island, :species], format_tbl=:wide, out=:df);
-    @test names(df_twoway) == ["island", "Adelie", "Gentoo", "Chinstrap"]
-    @test nrow(df_twoway) == 3
+    @test names(df_twoway) == ["-", "Adelie", "Gentoo", "Chinstrap", "Total by island"]
+    @test nrow(df_twoway) == 4
     df_twoway = tabulate(df, [:sex, :island, :species], format_tbl=:wide, out=:df);
-    @test names(df_twoway) == ["sex", "island", "Adelie", "Gentoo", "Chinstrap"]
-    @test nrow(df_twoway) == 6
+    @test names(df_twoway) == ["-", "--", "Adelie", "Gentoo", "Chinstrap", "Total by sex, island"]
+    @test nrow(df_twoway) == 7
 
     # on a specific dataset (see issue #1)
     df = DataFrame(x = [1, 2, 5, "NA", missing], y = ["a", "c", "b", "e", "d"])
@@ -55,10 +58,6 @@
     @test nrow(tabulate(df, [:x, :y], group_type = :type, out=:df)) == 3
     @test nrow(tabulate(df, [:x, :y], group_type = [:type, :value], out=:df)) == 4 
     @test nrow(tabulate(df, [:x, :y], group_type = [:value, :type], out=:df)) == 4
-
-    # Test that function do not error on empty
-    @test isnothing(tabulate(df[ df.island .== "Brehat", :], :sex))
-
 
 end
 
