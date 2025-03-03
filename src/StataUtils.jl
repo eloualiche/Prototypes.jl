@@ -93,6 +93,11 @@ function tabulate(
         end
     end
 
+    if isempty(df)
+        @warn "Input Dataframe is empty ..."
+        return nothing
+    end
+
     # Count the number of observations by `columns`: this is the main calculation
     group_type_error_msg = """
         \ngroup_type input must specify either ':value' or ':type' for columns;

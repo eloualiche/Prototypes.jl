@@ -56,6 +56,9 @@
     @test nrow(tabulate(df, [:x, :y], group_type = [:type, :value], out=:df)) == 4 
     @test nrow(tabulate(df, [:x, :y], group_type = [:value, :type], out=:df)) == 4
 
+    # Test that function do not error on empty
+    @test isnothing(tabulate(df[ df.island .== "Brehat", :], :sex))
+
 
 end
 

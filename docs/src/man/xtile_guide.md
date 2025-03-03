@@ -1,8 +1,8 @@
-# Winsorizing
+# Xtile
 
-The function `winsorize` tries to emulate stata winsor function.
+The function `xtile` tries to emulate stata [xtile](https://www.stata.com/manuals/dpctile.pdf) function.
 
-There is a [`winsor`](https://juliastats.org/StatsBase.jl/stable/robust/#StatsBase.winsor) function in StatsBase.jl but I think it's a little less full-featured.
+There is a [`BinScatter.jl`](https://github.com/matthieugomez/Binscatters.jl) package which already implements these features.
 
 
 ```@setup hist
@@ -25,17 +25,26 @@ savefig(p1, "../man/p1.svg"); nothing # hide
 ![](p1.svg)
 
 
-Replace the outliers based on quantile
+### 
 ```@example hist; 
-x_win = winsorize(x, probs=(0.05, 0.95));
-p2 = histogram(x, bins=-4:0.1:4, color="blue", label="distribution", framestyle=:box); 
-histogram!(x_win, bins=-4:0.1:4, color="red", opacity=0.5, label="winsorized")
+x_tile = hcat(x, xtile(x, 5))
+p2 = histogram(x, bins=-4:0.1:4, color="grey", label="distribution", framestyle=:box); 
+for i in 1:5
+    histogram!(x_tile[ x_tile[:, 2] .== i , 1], bins=-4:0.1:4)
+end
+
+
+p2 = histogram(x_tile[:,1], bins=-4:0.1:4, color="grey", label="distribution", framestyle=:box, groups=Int.(x_tile[:,2]))
+
+i = 2
+x_tile[ x_tile[:, 2] .== i , 1]
+
 savefig(p2, "p2.svg"); nothing # hide
 ```
 ![](p2.svg)
 
 
-It is possible to only trim one side
+### One side trim
 ```@example hist; 
 x_win = winsorize(x, probs=(0, 0.8));
 p3 = histogram(x, bins=-4:0.1:4, color="blue", label="distribution", framestyle=:box);
@@ -45,6 +54,7 @@ savefig(p3, "p3.svg"); nothing # hide
 ![](p3.svg)
 
 
+### Bring your own cutpoints
 Another type of winsorizing is to specify your own cutpoints (they do not have to be symmetric):
 ```@example hist
 x_win = winsorize(x, cutpoints=(-1.96, 2.575));
@@ -55,7 +65,7 @@ savefig(p4, "p4.svg"); nothing # hide
 ![](p4.svg)
 
 
-
+### Rely on the computer to select the right cutpoints
 If you do not specify either they will specified automatically
 ```@example hist
 x_win = winsorize(x; verbose=true);
@@ -66,7 +76,7 @@ savefig(p5, "p5.svg"); nothing # hide
 ![](p5.svg)
 
 
-
+### How not to replace outliers
 If you do not want to replace the value by the cutoffs, specify `replace_value=missing`:
 ```@example hist
 x_win = winsorize(x, cutpoints=(-2.575, 1.96), replace_value=missing);
@@ -77,7 +87,7 @@ savefig(p6, "p6.svg"); nothing # hide
 ![](p6.svg)
 
 
-
+### How to choose your replacement
 The `replace_value` command gives you some flexibility to do whatever you want in your outlier data transformation
 ```@example hist
 x_win = winsorize(x, cutpoints=(-2.575, 1.96), replace_value=(-1.96, 1.28));
