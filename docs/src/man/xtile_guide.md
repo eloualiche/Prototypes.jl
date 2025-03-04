@@ -7,7 +7,7 @@ There is a [`BinScatter.jl`](https://github.com/matthieugomez/Binscatters.jl) pa
 
 ```@setup hist
 import Pkg; Pkg.add("Plots");
-using Plots, Random, Prototypes, StatsBase
+using Plots, Random, StatsBase, Prototypes
 gr(); theme(:wong2); Plots.default(display_type=:inline, size=(1250,750), thickness_scaling=1)
 ```
 

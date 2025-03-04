@@ -1,10 +1,12 @@
 #!/usr/bin/env julia
+
+
 push!(LOAD_PATH, "../src/")
 # import Pkg; Pkg.develop("../src")
-using Prototypes
-
+# locally : julia --color=yes --project make.jl
 
 # -- 
+using Prototypes
 using Documenter
 using DocumenterVitepress
 
