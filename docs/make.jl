@@ -24,7 +24,7 @@ makedocs(
         "Home" => "index.md",
         "Manual" => [
             "man/logger_guide.md",
-            # "man/xtile_guide.md",
+            "man/xtile_guide.md",
             "man/winsorize_guide.md"
         ],
         "Demos" => [
