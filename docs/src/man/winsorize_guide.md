@@ -19,9 +19,8 @@ Start with a simple distribution to visualize the effect of *winsorizing*
 Random.seed!(3); x = randn(10_000);
 p1 = histogram(x, bins=-4:0.1:4, color="blue", label="distribution", 
     framestyle=:box, size=(1250,750))
-savefig(p1, "../man/p1.svg"); nothing # hide
+savefig(p1, "p1.svg"); nothing # hide
 ```
-
 ![](p1.svg)
 
 

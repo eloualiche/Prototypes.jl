@@ -54,7 +54,7 @@ I have not implemented all the features of the stata tabulate function, but I am
 
 ### xtile
 
-See the test suite for examples.
+See the [doc](https://eloualiche.github.io/Prototypes.jl/dev/man/xtile_guide) or the [tests](test/UnitTests/xtile.jl) for examples.
 ```julia
 sales = rand(10_000);
 a = xtile(sales, 10);
@@ -70,7 +70,7 @@ xtile(cities, 10)
 This is fairly standard and I offer options to specify probabilities or cutpoints; moreover you can replace the values that are winsorized with a missing, the cutpoints, or some specific values.
 There is a [`winsor`](https://juliastats.org/StatsBase.jl/stable/robust/#StatsBase.winsor) function in StatsBase.jl but I think it's a little less full-featured.
 
-See the doc for [examples](https://eloualiche.github.io/Prototypes.jl/dev/man/winsor_guide)
+See the doc for [examples](https://eloualiche.github.io/Prototypes.jl/dev/man/winsorize_guide)
 ```julia
 df = DataFrame(PalmerPenguins.load())
 winsorize(df.flipper_length_mm, probs=(0.05, 0.95)) # skipmissing by default
