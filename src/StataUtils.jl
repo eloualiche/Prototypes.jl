@@ -243,6 +243,11 @@ function tabulate(
             df_out = hcat(df_out, col_vector)
             rename!(df_out, [i => "-"^i for i in 1:N_GROUP_COLS])
 
+            #TODO: add a line on top
+            #   blank for the group_cols 
+            #   name of the wide col 
+            #   total by for the sum col
+
             col_highlighters = vcat(
                 map(i -> (hl_col(i, crayon"cyan bold")), 1:N_GROUP_COLS),
                 [ hl_custom_gradient(cols=i, colorscheme=:Greens_9, 
@@ -259,7 +264,7 @@ function tabulate(
 
             hlines = [1, size(df_out, 1)]
             vlines = [N_GROUP_COLS, N_GROUP_COLS+N_VAR_COLS]
-            alignment = vcat(repeat([:l], N_GROUP_COLS), repeat([:c], N_VAR_COLS), [:r])
+            alignment = vcat(repeat([:l], N_GROUP_COLS), repeat([:c], N_VAR_COLS), [:l])
 
 
         elseif format_stat == :pct
@@ -277,7 +282,7 @@ function tabulate(
                 )
 
             hlines = [1]
-            vlines = [0]
+            vlines = [0, N_GROUP_COLS, N_GROUP_COLS+N_VAR_COLS]
             alignment = vcat(repeat([:l], N_GROUP_COLS), repeat([:c], N_VAR_COLS))
 
 

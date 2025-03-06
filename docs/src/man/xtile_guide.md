@@ -17,7 +17,8 @@ gr(); theme(:wong2); Plots.default(display_type=:inline, size=(1250,750), thickn
 Start with a simple distribution to visualize the effect of *winsorizing*
 ```@example hist
 Random.seed!(3); x = randn(10_000);
-p1 = histogram(x, bins=-4:0.1:4, color="blue", label="distribution", 
+p1 = histogram(x, 
+    bins=-4:0.1:4, alpha=0.25, color="grey", label="",
     framestyle=:box, size=(1250,750))
 savefig(p1, "p1.svg"); nothing # hide
 ```

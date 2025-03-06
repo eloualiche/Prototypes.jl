@@ -1,7 +1,7 @@
 name = "Prototypes"
 uuid = "c4b71826-3ae8-424d-8064-a6162adbcdaa"
 authors = ["Erik Loualiche"]
-version = "0.6.5"
+version = "0.6.6"
 
 [deps]
 ColorSchemes = "35d6a980-a343-548e-a6ea-1d62b119f2f4"
@@ -21,7 +21,7 @@ StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 HTTP = "1.10.15"
 Missings = "1.2.0"
 PalmerPenguins = "0.1.4"
-StatsBase = "0.34.4"
+StatsBase = ">= 0.33"
 StreamToString = "0.1.0"
 julia = "1"
 
