@@ -31,6 +31,7 @@ This was forked from TexTables.jl and was inspired by https://github.com/matthie
 - `reorder_cols::Bool=true`  Whether to sort the output by sortable columns
 - `format_tbl::Symbol=:long` How to present the results long or wide (stata twoway)
 - `format_stat::Symbol=:freq`  Which statistics to present for format :freq or :pct
+- `skip_stat::Union{Nothing, Symbol, Vector{Symbol}}=nothing`  do not print out all statistics (only for string)
 - `out::Symbol=:stdout`  Output format:
     - `:stdout`  Print formatted table to standard output (returns nothing)
     - `:df`  Return the result as a DataFrame
@@ -75,6 +76,7 @@ function tabulate(
     reorder_cols::Bool=true,
     format_tbl::Symbol=:long, 
     format_stat::Symbol=:freq,
+    skip_stat::Union{Nothing, Symbol, Vector{Symbol}}=nothing,
     out::Symbol=:stdout)
 
     if typeof(cols) <: Symbol # check if it's an array or just a point
@@ -199,21 +201,48 @@ function tabulate(
             end
 
         elseif out==:string # this might be costly as I am regenerating the table.
-            pt = pretty_table(String, df_out;
-                hlines = [1],
-                vlines = [N_COLS],
-                alignment = vcat(repeat([:l], N_COLS), :c, :c, :c, :c),
-                cell_alignment = reduce(push!,
-                    map(i -> (i,1)=>:l, 1:N_COLS+3),
-                    init=Dict{Tuple{Int64, Int64}, Symbol}()),
-                header = [string.(new_cols); "Freq."; "Percent"; "Cum"; "Hist."],
-                formatters =  col_formatters,
-                highlighters = col_highlighters,
-                crop = :none, # no crop for string output
-                border_crayon = crayon"bold yellow",
-                header_crayon = crayon"bold light_green",
-                show_header = true,
-            )
+            if isnothing(skip_stat)
+                pt = pretty_table(String, df_out;
+                    hlines = [1],
+                    vlines = [N_COLS],
+                    alignment = vcat(repeat([:l], N_COLS), :c, :c, :c, :c),
+                    cell_alignment = reduce(push!,
+                        map(i -> (i,1)=>:l, 1:N_COLS+3),
+                        init=Dict{Tuple{Int64, Int64}, Symbol}()),
+                    header = [string.(new_cols); "Freq."; "Percent"; "Cum"; "Hist."],
+                    formatters =  col_formatters,
+                    highlighters = col_highlighters,
+                    crop = :none, # no crop for string output
+                    border_crayon = crayon"bold yellow",
+                    header_crayon = crayon"bold light_green",
+                    show_header = true,
+                )
+            else 
+                col_stat = setdiff([:freq, :pct, :cum, :freq_hist], 
+                                   isa(skip_stat, Vector) ? skip_stat : [skip_stat])
+                N_COL_STAT = size(col_stat,1)
+                header_table = vcat(string.(new_cols), 
+                    [Dict(:freq=>"Freq.", :pct=>"Percent", :cum=>"Cum", :freq_hist=>"Hist.")[k]
+                     for k in col_stat]
+                    )
+                df_sub_out = select(df_out, cols, col_stat)
+                pt = pretty_table(String, df_sub_out;
+                    hlines = [1],
+                    vlines = [N_COLS],
+                    alignment = vcat(repeat([:l], N_COLS), repeat([:c], N_COL_STAT)),
+                    cell_alignment = reduce(push!,
+                        map(i -> (i,1)=>:l, 1:N_COLS+N_COL_STAT-1),
+                        init=Dict{Tuple{Int64, Int64}, Symbol}()),
+                    header = header_table,
+                    formatters =  col_formatters,
+                    highlighters = col_highlighters,
+                    crop = :none, # no crop for string output
+                    border_crayon = crayon"bold yellow",
+                    header_crayon = crayon"bold light_green",
+                    show_header = true,
+                )
+            end                
+
             return(pt)
         end
 
@@ -313,8 +342,7 @@ function tabulate(
             elseif out==:df
                 return(df_out)
             end
-        elseif out==:string
-
+        elseif out==:string            
             pt = pretty_table(String, df_out;
                 hlines = hlines,
                 vlines = vlines,

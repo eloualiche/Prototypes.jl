@@ -20,6 +20,12 @@
     first_line = split(tab_string, '\n', limit=2)[1]
     @test all(x -> contains(first_line, x), ["island", "Freq", "Percent", "Cum", "Hist."])
 
+    tab_buf = IOBuffer(tabulate(df, :island; out=:string, skip_stat=:freq_hist))
+    tab_string = String(take!(tab_buf))
+    @test count(==('\n'), tab_string) == 5 # test number of lines expected
+    first_line = split(tab_string, '\n', limit=2)[1]
+    @test all(x -> contains(first_line, x), ["island", "Freq", "Percent", "Cum"])
+
     # test the nothing output
     tab_stdout = tabulate(df, :island, out=:stdout)
     @test typeof(tab_stdout) == Nothing
