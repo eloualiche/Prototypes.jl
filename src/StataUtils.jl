@@ -248,7 +248,9 @@ function tabulate(
 
     elseif format_tbl == :wide 
 
-        df_out = unstack(df_out, new_cols[1:(N_COLS-1)], new_cols[N_COLS], format_stat)
+        df_out = unstack(df_out, 
+            new_cols[1:(N_COLS-1)], new_cols[N_COLS], format_stat, 
+            allowmissing=true)
         # new_cols[1:(N_COLS-1)] might be more than one category
         # new_cols[N_COLS] only one group!
 
