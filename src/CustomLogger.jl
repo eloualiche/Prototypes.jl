@@ -95,7 +95,7 @@ function custom_logger(
     log_time_format::AbstractString="HH:MM:SS",
     displaysize::Tuple{Int,Int}=(50,100),
     log_format::Symbol=:log4j, 
-    shorten_path::Symbol=:no,
+    shorten_path::Symbol=:relative_path,
     verbose::Bool=false)
 
     # warning if some non imported get filtered ...
@@ -246,7 +246,7 @@ function custom_format(io, log_record::NamedTuple;
     log_date_format::AbstractString="yyyy-mm-dd", 
     log_time_format::AbstractString="HH:MM:SS",
     log_format::Symbol=:pretty,  # available pretty or log4j
-    shorten_path::Symbol=:no     # see function below tried to emulate p10k
+    shorten_path::Symbol=:relative_path     # see function below tried to emulate p10k
  )
 
     # -- format the message!!!
@@ -353,16 +353,17 @@ end
 
 # --- log4j format
 function format_log4j(log_record::NamedTuple; 
-    shorten_path::Symbol=:no)::AbstractString
+    shorten_path::Symbol=:relative_path)::AbstractString
 
     timestamp = format(now(), "yyyy-mm-dd HH:MM:SS")
     log_level = rpad(uppercase(string(log_record.level)), 5)
-    module_name = log_record._module
-    file = shorten_path==:no ? log_record.file : shorten_path_str(log_record.file; strategy=shorten_path)
+    module_name = nameof(log_record._module)
+    file = shorten_path_str(log_record.file; strategy=shorten_path)
+    prefix = shorten_path == :relative_path ? "[$(pwd())] " : ""
     line = log_record.line
     formatted_message = reformat_msg(log_record, log_format=:log4j)
 
-    log_entry = "$timestamp $log_level $module_name[$file:$line] - $(replace(formatted_message, "\n" => " | "))"
+    log_entry = "$prefix$timestamp $log_level $module_name[$file:$line] $(replace(formatted_message, "\n" => " | "))"
     
     return log_entry 
 
@@ -469,7 +470,11 @@ function shorten_path_str(path::AbstractString;
     strategy::Symbol=:truncate_middle
     )::AbstractString
 
-    strategy == :no && return path
+    if strategy == :no 
+        return path
+    elseif strategy == :relative_path
+        return "./" * relpath(path, pwd())
+    end
 
     # Return early if path is already short enough
     if length(path) ≤ max_length
