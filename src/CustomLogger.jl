@@ -75,7 +75,8 @@ end
 - `log_date_format::AbstractString="yyyy-mm-dd"`: time stamp format at beginning of each logged lines for dates
 - `log_time_format::AbstractString="HH:MM:SS"`: time stamp format at beginning of each logged lines for times
 - `displaysize::Tuple{Int,Int}=(50,100)`: how much to show on log (same for all logs for now!)
-- `log_format::Symbol=:log4j`: how to format the log files (stdout is always pretty); I have added an option for pretty (all or nothing for now)
+- `log_format::Symbol=:log4j`: how to format the log files; I have added an option for pretty (all or nothing for now)
+- `log_format_stdout::Symbol=:pretty`: how to format the stdout; default is pretty
 - `overwrite::Bool=false`: do we overwrite previously created log files
 
 The custom_logger function creates four files in `output_dir` for four different levels of logging:
@@ -95,6 +96,7 @@ function custom_logger(
     log_time_format::AbstractString="HH:MM:SS",
     displaysize::Tuple{Int,Int}=(50,100),
     log_format::Symbol=:log4j, 
+    log_format_stdout::Symbol=:pretty,
     shorten_path::Symbol=:relative_path,
     verbose::Bool=false)
 
@@ -149,11 +151,11 @@ function custom_logger(
     module_specific_message_filter = create_absolute_filter(all_filters)
 
 
-    format_log_pretty = (io,log_record)->custom_format(io, log_record;
+    format_log_stdout = (io,log_record)->custom_format(io, log_record;
         displaysize=displaysize,
         log_date_format=log_date_format,
         log_time_format=log_time_format,
-        log_format=:pretty)
+        log_format=log_format_stdout)
 
     format_log_file = (io,log_record)->custom_format(io, log_record;
         displaysize=displaysize,
@@ -182,7 +184,7 @@ function custom_logger(
             Logging.Debug),
         MinLevelLogger(
             EarlyFilteredLogger(module_specific_message_filter, # stdout
-                FormatLogger(format_log_pretty, stdout)),
+                FormatLogger(format_log_stdout, stdout)),
             Logging.Info)
     )
 

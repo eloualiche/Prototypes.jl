@@ -13,7 +13,7 @@ import StatsBase: quantile, Weights, sample
 using StreamToString
 
 const testsuite = [
-    # "tabulate", "xtile", "winsorize", "panel_fill", 
+    "tabulate", "xtile", "winsorize", "panel_fill", 
     "customlogger"
 ]
 
