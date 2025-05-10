@@ -16,10 +16,14 @@
 abstract type LogSink end
 
 # Helper function to get filenames
-function get_log_filenames(filename::AbstractString; create_files::Bool=false)
+function get_log_filenames(filename::AbstractString; 
+    file_loggers::Vector{Symbol}=[:error, :warn, :info, :debug], 
+    create_files::Bool=false)
+
     if create_files
-        files = ["$(filename)_error.log", "$(filename)_warn.log",
-                 "$(filename)_info.log", "$(filename)_debug.log"]
+        files = map(f -> "$(filename)_$(string(f)).log", file_loggers)
+        # files = ["$(filename)_error.log", "$(filename)_warn.log",
+        #          "$(filename)_info.log", "$(filename)_debug.log"]
     else
         files = repeat([filename], 4)
     end
@@ -36,8 +40,11 @@ struct FileSink <: LogSink
     files::Vector{String}
     ios::Vector{IO}
 
-    function FileSink(filename::AbstractString; create_files::Bool=false)
-        files = get_log_filenames(filename; create_files=create_files)
+    function FileSink(filename::AbstractString; 
+            file_loggers::Vector{Symbol}=[:error, :warn, :info, :debug], 
+            create_files::Bool=false)
+
+        files = get_log_filenames(filename; file_loggers=file_loggers, create_files=create_files)
         if create_files
             @info "Creating four different files for logging ... \n \u2B91\t$(join(files, "\n\t"))"
         else
@@ -203,6 +210,55 @@ end
 
 
 # --------------------------------------------------------------------------------------------------
+# Convenience constructor that creates appropriate sink
+function custom_logger(
+    filename::Union{AbstractString, Vector{AbstractString}};
+    create_log_files::Bool=false,
+    overwrite::Bool=false,
+    create_dir::Bool=false,
+    file_loggers::Union{Symbol, Vector{Symbol}}=[:error, :warn, :info, :debug],
+    kwargs...)
+
+    file_loggers_array = file_loggers isa Symbol ? [file_loggers] : file_loggers
+
+    files = get_log_filenames(filename; 
+        file_loggers=file_loggers_array, create_files=create_log_files)
+
+    # create directory if needed and bool true
+    # returns an error if directory does not exist and bool false
+    log_dir = unique(dirname.(files))
+    if create_dir && !isdir(log_dir)
+        @warn "Creating directory for logs ... $(join(log_dir, ", "))"
+        mkpath.(log_dir)
+    elseif !isdir(log_dir)
+        @error "Directory for logs does not exist ... $(join(log_dir, ", "))"
+    end
+    # Handle cleanup if needed
+    overwrite && foreach(f -> rm(f, force=true), files)
+    # Create sink
+    sink = FileSink(filename; 
+        file_loggers=file_loggers_array, create_files=create_log_files)
+    # Call main logger function
+    custom_logger(sink; kwargs...)
+end
+
+
+# version for starting julia in batch mode
+function custom_logger(;
+    kwargs...)
+
+    if abspath(PROGRAM_FILE) == @__FILE__  # true if not in REPL
+        custom_logger(@__FILE__;
+            kwargs...)
+    else
+        @error "Could not get proper filename for logger ... filename = $(@__FILE__)"
+    end
+
+end
+# --------------------------------------------------------------------------------------------------
+
+
+# --------------------------------------------------------------------------------------------------
 function create_demux_logger(sink, 
     file_loggers::Union{Symbol, Vector{Symbol}},
     module_absolute_message_filter,
@@ -256,50 +312,6 @@ function create_demux_logger(sink,
     
     # Create and return the TeeLogger
     return TeeLogger(logger_list...)
-end
-# --------------------------------------------------------------------------------------------------
-
-
-# --------------------------------------------------------------------------------------------------
-# Convenience constructor that creates appropriate sink
-function custom_logger(
-    filename::Union{AbstractString, Vector{AbstractString}};
-    create_log_files::Bool=false,
-    overwrite::Bool=false,
-    create_dir::Bool=false,
-    kwargs...)
-
-    files = get_log_filenames(filename; create_files=create_log_files)
-
-    # create directory if needed and bool true
-    # returns an error if directory does not exist and bool false
-    log_dir = unique(dirname.(files))
-    if create_dir && !isdir(log_dir)
-        @warn "Creating directory for logs ... $(join(log_dir, ", "))"
-        mkpath.(log_dir)
-    elseif !isdir(log_dir)
-        @error "Directory for logs does not exist ... $(join(log_dir, ", "))"
-    end
-    # Handle cleanup if needed
-    overwrite && foreach(f -> rm(f, force=true), files)
-    # Create sink
-    sink = FileSink(filename; create_files=create_log_files)
-    # Call main logger function
-    custom_logger(sink; kwargs...)
-end
-
-
-# version for starting julia in batch mode
-function custom_logger(;
-    kwargs...)
-
-    if abspath(PROGRAM_FILE) == @__FILE__  # true if not in REPL
-        custom_logger(@__FILE__;
-            kwargs...)
-    else
-        @error "Could not get proper filename for logger ... filename = $(@__FILE__)"
-    end
-
 end
 # --------------------------------------------------------------------------------------------------
 
