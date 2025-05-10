@@ -72,6 +72,7 @@ end
   Some packages just write too much log ... filter them out but still be able to check them out in other logs
 - `filtered_modules_all::Vector{Symbol}=nothing`: which modules do you want to filter out of logging (across all logs)
    Examples could be TranscodingStreams (noticed that it writes so much to logs that it sometimes slows down I/O)
+- `file_loggers::Union{Symbol, Vector{Symbol}}=[:error, :warn, :info, :debug]`: which file logger to register 
 - `log_date_format::AbstractString="yyyy-mm-dd"`: time stamp format at beginning of each logged lines for dates
 - `log_time_format::AbstractString="HH:MM:SS"`: time stamp format at beginning of each logged lines for times
 - `displaysize::Tuple{Int,Int}=(50,100)`: how much to show on log (same for all logs for now!)
@@ -92,6 +93,7 @@ function custom_logger(
     sink::LogSink;
     filtered_modules_specific::Union{Nothing, Vector{Symbol}}=nothing,
     filtered_modules_all::Union{Nothing, Vector{Symbol}}=nothing,
+    file_loggers::Union{Symbol, Vector{Symbol}}=[:error, :warn, :info, :debug],
     log_date_format::AbstractString="yyyy-mm-dd",
     log_time_format::AbstractString="HH:MM:SS",
     displaysize::Tuple{Int,Int}=(50,100),
@@ -165,33 +167,95 @@ function custom_logger(
         shorten_path=shorten_path)
 
     # Create demux_logger using sink's IO streams
-    demux_logger = TeeLogger(
-        MinLevelLogger(
-            EarlyFilteredLogger(module_absolute_message_filter, # error
-                FormatLogger(format_log_file, sink.ios[1])),
-            Logging.Error),
-        MinLevelLogger(
-            EarlyFilteredLogger(module_absolute_message_filter, # warn
-                FormatLogger(format_log_file, sink.ios[2])),
-            Logging.Warn),
-        MinLevelLogger(
-            EarlyFilteredLogger(module_specific_message_filter, # info
-                FormatLogger(format_log_file, sink.ios[3])),
-            Logging.Info),
-        MinLevelLogger(
-            EarlyFilteredLogger(module_absolute_message_filter, # debug
-                FormatLogger(format_log_file, sink.ios[4])),
-            Logging.Debug),
-        MinLevelLogger(
-            EarlyFilteredLogger(module_specific_message_filter, # stdout
-                FormatLogger(format_log_stdout, stdout)),
-            Logging.Info)
-    )
+    # demux_logger = TeeLogger(
+    #     MinLevelLogger(
+    #         EarlyFilteredLogger(module_absolute_message_filter, # error
+    #             FormatLogger(format_log_file, sink.ios[1])),
+    #         Logging.Error),
+    #     MinLevelLogger(
+    #         EarlyFilteredLogger(module_absolute_message_filter, # warn
+    #             FormatLogger(format_log_file, sink.ios[2])),
+    #         Logging.Warn),
+    #     MinLevelLogger(
+    #         EarlyFilteredLogger(module_specific_message_filter, # info
+    #             FormatLogger(format_log_file, sink.ios[3])),
+    #         Logging.Info),
+    #     MinLevelLogger(
+    #         EarlyFilteredLogger(module_absolute_message_filter, # debug
+    #             FormatLogger(format_log_file, sink.ios[4])),
+    #         Logging.Debug),
+    #     MinLevelLogger(
+    #         EarlyFilteredLogger(module_specific_message_filter, # stdout
+    #             FormatLogger(format_log_stdout, stdout)),
+    #         Logging.Info)
+    # )
+    demux_logger = create_demux_logger(sink, file_loggers,
+        module_absolute_message_filter, module_specific_message_filter, format_log_file, format_log_stdout)
+
+
 
     global_logger(demux_logger)
 
 
     return demux_logger
+end
+# --------------------------------------------------------------------------------------------------
+
+
+# --------------------------------------------------------------------------------------------------
+function create_demux_logger(sink, 
+    file_loggers::Union{Symbol, Vector{Symbol}},
+    module_absolute_message_filter,
+    module_specific_message_filter,
+    format_log_file,
+    format_log_stdout)
+    
+    # Convert single symbol to vector for consistency
+    loggers_to_include = file_loggers isa Symbol ? [file_loggers] : file_loggers
+    
+    # Create the individual loggers dictionary
+    available_loggers = Dict(
+        :error => MinLevelLogger(
+            EarlyFilteredLogger(module_absolute_message_filter, 
+                FormatLogger(format_log_file, sink.ios[1])),
+            Logging.Error),
+        :warn => MinLevelLogger(
+            EarlyFilteredLogger(module_absolute_message_filter, 
+                FormatLogger(format_log_file, sink.ios[2])),
+            Logging.Warn),
+        :info => MinLevelLogger(
+            EarlyFilteredLogger(module_specific_message_filter, 
+                FormatLogger(format_log_file, sink.ios[3])),
+            Logging.Info),
+        :debug => MinLevelLogger(
+            EarlyFilteredLogger(module_absolute_message_filter, 
+                FormatLogger(format_log_file, sink.ios[4])),
+            Logging.Debug)
+    )
+    
+    # Always include stdout logger
+    stdout_logger = MinLevelLogger(
+        EarlyFilteredLogger(module_specific_message_filter, 
+            FormatLogger(format_log_stdout, stdout)),
+        Logging.Info)
+    
+    # Build the logger list
+    logger_list = []
+    
+    # Add requested file loggers
+    for logger_key in loggers_to_include
+        if haskey(available_loggers, logger_key)
+            push!(logger_list, available_loggers[logger_key])
+        else
+            @warn "Unknown logger type: $logger_key"
+        end
+    end
+    
+    # Always add stdout logger at the end
+    push!(logger_list, stdout_logger)
+    
+    # Create and return the TeeLogger
+    return TeeLogger(logger_list...)
 end
 # --------------------------------------------------------------------------------------------------
 
