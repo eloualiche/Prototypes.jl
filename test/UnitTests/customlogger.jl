@@ -151,5 +151,30 @@
     @test any(map(contains("DEBUG"), filter(contains("<15>"), log_lines)))
     close_logger(logger_single, remove_files=true)
 
+   # -- logger to only one file sink 
+    log_path = joinpath.(tempdir(), "log")
+    logger_single = custom_logger(
+        log_path;
+        create_log_files=true, overwrite=true, 
+        file_loggers = [:debug])
+    @debug "DEBUG MESSAGE"
+    log_file = get_log_names(logger_single)[1]
+    log_content = read(log_file, String)
+    @test contains(log_content, r"DEBUG .* DEBUG MESSAGE")
+    close_logger(logger_single, remove_files=true)
+
 
 end
+
+
+
+
+
+
+
+
+
+
+
+
+

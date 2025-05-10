@@ -46,7 +46,7 @@ struct FileSink <: LogSink
 
         files = get_log_filenames(filename; file_loggers=file_loggers, create_files=create_files)
         if create_files
-            @info "Creating four different files for logging ... \n \u2B91\t$(join(files, "\n\t"))"
+            @info "Creating $(length(files)) different files for logging ... \n \u2B91\t$(join(files, "\n\t"))"
         else
            @info "Only one sink provided ... \n\tAll logs will be written without differentiation on $filename"
         end
@@ -239,7 +239,7 @@ function custom_logger(
     sink = FileSink(filename; 
         file_loggers=file_loggers_array, create_files=create_log_files)
     # Call main logger function
-    custom_logger(sink; kwargs...)
+    custom_logger(sink; file_loggers=file_loggers, kwargs...)
 end
 
 
@@ -268,26 +268,36 @@ function create_demux_logger(sink,
     
     # Convert single symbol to vector for consistency
     loggers_to_include = file_loggers isa Symbol ? [file_loggers] : file_loggers
-    
-    # Create the individual loggers dictionary
-    available_loggers = Dict(
-        :error => MinLevelLogger(
-            EarlyFilteredLogger(module_absolute_message_filter, 
-                FormatLogger(format_log_file, sink.ios[1])),
-            Logging.Error),
-        :warn => MinLevelLogger(
-            EarlyFilteredLogger(module_absolute_message_filter, 
-                FormatLogger(format_log_file, sink.ios[2])),
-            Logging.Warn),
-        :info => MinLevelLogger(
-            EarlyFilteredLogger(module_specific_message_filter, 
-                FormatLogger(format_log_file, sink.ios[3])),
-            Logging.Info),
-        :debug => MinLevelLogger(
-            EarlyFilteredLogger(module_absolute_message_filter, 
-                FormatLogger(format_log_file, sink.ios[4])),
-            Logging.Debug)
+        
+    logger_configs = Dict(
+        :error => (1, module_absolute_message_filter, Logging.Error),
+        :warn  => (2, module_absolute_message_filter, Logging.Warn),
+        :info  => (3, module_specific_message_filter, Logging.Info),
+        :debug => (4, module_absolute_message_filter, Logging.Debug)
     )
+
+    logger_list = []
+
+    io_index = 1
+    for logger_key in loggers_to_include
+        if haskey(logger_configs, logger_key)
+            if io_index > length(sink.ios)
+                error("Not enough IO streams in sink for logger: $logger_key")
+            end
+            
+            _, message_filter, log_level = logger_configs[logger_key]
+            
+            file_logger = MinLevelLogger(
+                EarlyFilteredLogger(message_filter, 
+                    FormatLogger(format_log_file, sink.ios[io_index])),
+                log_level)
+            
+            push!(logger_list, file_logger)
+            io_index += 1
+        else
+            @warn "Unknown logger type: $logger_key"
+        end
+    end
     
     # Always include stdout logger
     stdout_logger = MinLevelLogger(
@@ -295,23 +305,11 @@ function create_demux_logger(sink,
             FormatLogger(format_log_stdout, stdout)),
         Logging.Info)
     
-    # Build the logger list
-    logger_list = []
-    
-    # Add requested file loggers
-    for logger_key in loggers_to_include
-        if haskey(available_loggers, logger_key)
-            push!(logger_list, available_loggers[logger_key])
-        else
-            @warn "Unknown logger type: $logger_key"
-        end
-    end
-    
-    # Always add stdout logger at the end
     push!(logger_list, stdout_logger)
     
     # Create and return the TeeLogger
     return TeeLogger(logger_list...)
+
 end
 # --------------------------------------------------------------------------------------------------
 
