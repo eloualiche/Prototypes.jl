@@ -156,13 +156,14 @@
     logger_single = custom_logger(
         log_path;
         create_log_files=true, overwrite=true, 
-        file_loggers = [:debug])
+        file_loggers = [:debug, :info])
     @debug "DEBUG MESSAGE"
-    log_file = get_log_names(logger_single)[1]
-    log_content = read(log_file, String)
-    @test contains(log_content, r"DEBUG .* DEBUG MESSAGE")
+    @info "INFO MESSAGE"
+    log_file = get_log_names(logger_single)
+    log_content = read.(log_file, String)
+    @test contains.(log_content, r"DEBUG .* DEBUG MESSAGE") == [true, false]
+    @test contains.(log_content, r"INFO .* INFO MESSAGE") == [true, true]
     close_logger(logger_single, remove_files=true)
-
 
 end
 
