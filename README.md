@@ -1,8 +1,9 @@
 # Prototypes
 
-[![CI](https://github.com/eloualiche/Prototypes.jl/actions/workflows/CI.yml/badge.svg)](https://github.com/eloualiche/Prototypes.jl/actions/workflows/CI.yml)
-[![Lifecycle:Experimental](https://img.shields.io/badge/Lifecycle-Experimental-339999)](https://github.com/eloualiche/Prototypes.jl/actions/workflows/CI.yml)
-[![codecov](https://codecov.io/gh/eloualiche/Prototypes.jl/graph/badge.svg?token=53QO3HSSRT)](https://codecov.io/gh/eloualiche/Prototypes.jl)
+**Note: this package is not being developped further and was split into [`BazerUtils.jl`](https://github.com/LouLouLibs/BazerUtils.jl) and [`BazerData.jl`](https://github.com/LouLouLibs/BazerData.jl)**
+
+
+-------------------------------------------------------------------------------------------
 
 `Prototypes.jl` is a placeholder package for some functions that I use in julia frequently.
 
@@ -137,4 +138,11 @@ custom_logger(
 
 I am writing some documentation that will a little more complete than this readme.
 
-See my other package [FinanceRoutines.jl](https://github.com/eloualiche/FinanceRoutines.jl) which is more focused and centered on working with financial data.
+See my other package [FinanceRoutines.jl](https://github.com/louloulibs/FinanceRoutines.jl) which is more focused and centered on working with financial data.
+
+
+
+[![CI](https://github.com/eloualiche/Prototypes.jl/actions/workflows/CI.yml/badge.svg)](https://github.com/eloualiche/Prototypes.jl/actions/workflows/CI.yml)
+[![Lifecycle:Experimental](https://img.shields.io/badge/Lifecycle-Experimental-339999)](https://github.com/eloualiche/Prototypes.jl/actions/workflows/CI.yml)
+[![codecov](https://codecov.io/gh/eloualiche/Prototypes.jl/graph/badge.svg?token=53QO3HSSRT)](https://codecov.io/gh/eloualiche/Prototypes.jl)
+
